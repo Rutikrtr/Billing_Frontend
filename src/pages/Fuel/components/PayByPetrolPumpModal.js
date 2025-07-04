@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Fuel, DollarSign, AlertCircle, CheckCircle, ChevronDown } from 'lucide-react';
-import api from '../../utils/axiosSetup';
+import api from '../../../utils/axiosSetup';
 import { toast } from 'react-hot-toast'; // or your toast library
 
 const PayByPetrolPumpModal = ({ isOpen, onClose, onPaymentSuccess }) => {

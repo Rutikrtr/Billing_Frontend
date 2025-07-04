@@ -4,4 +4,5 @@ import { ReactComponent as UserCircleIcon } from "./user-circle.svg?react";
 import { ReactComponent as CalenderIcon } from "./calendar.svg?react";
 import { ReactComponent as UserIcon } from "./user-line.svg?react";
 import { ReactComponent as PlusIcon } from "./plus.svg?react";
-export { GridIcon,Logoicon,UserCircleIcon ,CalenderIcon,UserIcon,PlusIcon};
+import { ReactComponent as ChevronDownIcon } from "./chevron-down.svg?react";
+export { GridIcon,Logoicon,UserCircleIcon ,CalenderIcon,UserIcon,PlusIcon,ChevronDownIcon};

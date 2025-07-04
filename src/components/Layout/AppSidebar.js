@@ -1,10 +1,11 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useSidebar } from '../../context/SidebarContext';
 import {
   GridIcon,
   Logoicon,
   UserCircleIcon,
+  ChevronDownIcon,
 } from '../../icons';
 
 import {
@@ -18,37 +19,38 @@ const navItems = [
   {
     icon: <GridIcon />,
     name: "Home",
-    path: "/dashboard/home", // Fixed: Updated to match nested routes
+    path: "/dashboard/home",
   },
   {
     icon: <UserCircleIcon />,
     name: "Clients",
-    path: "/dashboard/clients", // Fixed: Updated to match nested routes
+    path: "/dashboard/clients",
   },
   {
     icon: <Car />,
     name: "Vehicles",
-    path: "/dashboard/vehicle", // Fixed: Updated to match nested routes
+    path: "/dashboard/vehicle",
   },
   {
-    icon: <Receipt />,
+     icon: <Receipt />,
     name: "Billing",
-    path: "/dashboard/billig", // Fixed: Updated to match nested routes
+    subItems: [
+      { name: "Add & Print Bill", path: "/dashboard/billing", pro: false },
+      { name: "Transaction History", path: "/dashboard/transaction-history", pro: false },
+    ],
   },
   {
     icon: <Fuel />,
     name: "Fuel",
-    path: "/dashboard/fuel", // Fixed: Updated to match nested routes
+    path: "/dashboard/fuel",
   },
   {
+    name: "Overview",
     icon: <BarChart3 />,
-    name: "Billing Overview",
-    path: "/dashboard/overview", // Fixed: Updated to match nested routes
-  },
-  {
-    icon: <BarChart3 />,
-    name: "Client Overview",
-    path: "/dashboard/client-overview", // Fixed: Updated to match nested routes
+    subItems: [
+      { name: "Billing Overview", path: "/dashboard/overview", pro: false },
+      { name: "Client Overview", path: "/dashboard/client-overview", pro: false },
+    ],
   },
 ];
 
@@ -56,10 +58,12 @@ const AppSidebar = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
   const location = useLocation();
 
-  // Enhanced isActive function to handle both exact matches and index route
+  const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [subMenuHeight, setSubMenuHeight] = useState({});
+  const subMenuRefs = useRef({});
+
   const isActive = useCallback(
     (path) => {
-      // Handle the home/index route specially
       if (path === "/dashboard/home") {
         return location.pathname === "/dashboard" || location.pathname === "/dashboard/home";
       }
@@ -68,35 +72,164 @@ const AppSidebar = () => {
     [location.pathname]
   );
 
+  // Check if any submenu item is active and keep that submenu open
+  useEffect(() => {
+    let submenuMatched = false;
+    navItems.forEach((nav, index) => {
+      if (nav.subItems) {
+        nav.subItems.forEach((subItem) => {
+          if (isActive(subItem.path)) {
+            setOpenSubmenu(index);
+            submenuMatched = true;
+          }
+        });
+      }
+    });
+
+    if (!submenuMatched) {
+      setOpenSubmenu(null);
+    }
+  }, [location, isActive]);
+
+  // Calculate submenu height when it opens
+  useEffect(() => {
+    if (openSubmenu !== null && subMenuRefs.current[openSubmenu]) {
+      const element = subMenuRefs.current[openSubmenu];
+      // Small delay to ensure the element is rendered
+      setTimeout(() => {
+        if (element) {
+          setSubMenuHeight((prevHeights) => ({
+            ...prevHeights,
+            [openSubmenu]: element.scrollHeight,
+          }));
+        }
+      }, 10);
+    }
+  }, [openSubmenu, isExpanded, isHovered, isMobileOpen]);
+
+  const handleSubmenuToggle = (index) => {
+    setOpenSubmenu((prevOpenSubmenu) => {
+      if (prevOpenSubmenu === index) {
+        return null;
+      }
+      return index;
+    });
+  };
+
   const renderMenuItems = () => (
     <ul className="flex flex-col gap-4">
       {navItems.map((nav, index) => (
         <li key={nav.name}>
-          <Link
-            to={nav.path}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
-              isActive(nav.path)
-                ? "bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-white shadow-lg shadow-blue-500/10 border border-blue-400/30 backdrop-blur-sm"
-                : "text-gray-300 hover:bg-gradient-to-r hover:from-gray-700/40 hover:to-gray-600/20 hover:text-white hover:shadow-md hover:shadow-gray-900/20 border border-transparent hover:border-gray-600/30 backdrop-blur-sm"
-            } ${
-              !isExpanded && !isHovered
-                ? "lg:justify-center"
-                : "lg:justify-start"
-            }`}
-          >
-            <span
-              className={`flex-shrink-0 w-5 h-5 transition-all duration-300 ${
-                isActive(nav.path)
-                  ? "text-blue-300 drop-shadow-sm"
-                  : "text-gray-400 group-hover:text-gray-200 group-hover:scale-110"
-              }`}
-            >
-              {nav.icon}
-            </span>
-            {(isExpanded || isHovered || isMobileOpen) && (
-              <span className="font-medium text-sm tracking-wide">{nav.name}</span>
-            )}
-          </Link>
+          {nav.subItems ? (
+            <>
+              <button
+                onClick={() => handleSubmenuToggle(index)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                  openSubmenu === index
+                    ? "bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-white shadow-lg shadow-blue-500/10 border border-blue-400/30 backdrop-blur-sm"
+                    : "text-gray-300 hover:bg-gradient-to-r hover:from-gray-700/40 hover:to-gray-600/20 hover:text-white hover:shadow-md hover:shadow-gray-900/20 border border-transparent hover:border-gray-600/30 backdrop-blur-sm"
+                } ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "lg:justify-start"
+                }`}
+              >
+                <span
+                  className={`flex-shrink-0 w-5 h-5 transition-all duration-300 ${
+                    openSubmenu === index
+                      ? "text-blue-300 drop-shadow-sm"
+                      : "text-gray-400 group-hover:text-gray-200 group-hover:scale-110"
+                  }`}
+                >
+                  {nav.icon}
+                </span>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <>
+                    <span className="font-medium text-sm tracking-wide">{nav.name}</span>
+                    <ChevronDownIcon
+                      className={`ml-auto w-4 h-4 transition-transform duration-200 ${
+                        openSubmenu === index
+                          ? "rotate-180 text-blue-300"
+                          : "text-gray-400 group-hover:text-gray-200"
+                      }`}
+                    />
+                  </>
+                )}
+              </button>
+              
+              {/* Submenu - Always render but with smooth height transition */}
+              {(isExpanded || isHovered || isMobileOpen) && (
+                <div
+                  ref={(el) => {
+                    subMenuRefs.current[index] = el;
+                  }}
+                  className="overflow-hidden transition-all duration-300 ease-in-out"
+                  style={{
+                    height: openSubmenu === index ? `${subMenuHeight[index] || 0}px` : "0px",
+                    opacity: openSubmenu === index ? 1 : 0,
+                  }}
+                >
+                  <ul className="mt-2 space-y-1 ml-8">
+                    {nav.subItems.map((subItem) => (
+                      <li key={subItem.name}>
+                        <Link
+                          to={subItem.path}
+                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                            isActive(subItem.path)
+                              ? "bg-gradient-to-r from-blue-500/30 to-indigo-500/30 text-blue-200 shadow-md border border-blue-400/20"
+                              : "text-gray-400 hover:text-gray-200 hover:bg-gray-700/30"
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                          {subItem.name}
+                          <span className="flex items-center gap-1 ml-auto">
+                            {subItem.new && (
+                              <span className="px-1.5 py-0.5 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
+                                new
+                              </span>
+                            )}
+                            {subItem.pro && (
+                              <span className="px-1.5 py-0.5 text-xs rounded-full bg-orange-500/20 text-orange-300 border border-orange-400/30">
+                                pro
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
+          ) : (
+            nav.path && (
+              <Link
+                to={nav.path}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+                  isActive(nav.path)
+                    ? "bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-white shadow-lg shadow-blue-500/10 border border-blue-400/30 backdrop-blur-sm"
+                    : "text-gray-300 hover:bg-gradient-to-r hover:from-gray-700/40 hover:to-gray-600/20 hover:text-white hover:shadow-md hover:shadow-gray-900/20 border border-transparent hover:border-gray-600/30 backdrop-blur-sm"
+                } ${
+                  !isExpanded && !isHovered
+                    ? "lg:justify-center"
+                    : "lg:justify-start"
+                }`}
+              >
+                <span
+                  className={`flex-shrink-0 w-5 h-5 transition-all duration-300 ${
+                    isActive(nav.path)
+                      ? "text-blue-300 drop-shadow-sm"
+                      : "text-gray-400 group-hover:text-gray-200 group-hover:scale-110"
+                  }`}
+                >
+                  {nav.icon}
+                </span>
+                {(isExpanded || isHovered || isMobileOpen) && (
+                  <span className="font-medium text-sm tracking-wide">{nav.name}</span>
+                )}
+              </Link>
+            )
+          )}
         </li>
       ))}
     </ul>
@@ -122,7 +255,7 @@ const AppSidebar = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link to="/dashboard" className="flex items-center gap-3 group"> {/* Fixed: Updated logo link */}
+        <Link to="/dashboard" className="flex items-center gap-3 group">
           {isExpanded || isHovered || isMobileOpen ? (
             <>
               <Logoicon className="w-8 h-8 text-blue-400 drop-shadow-sm group-hover:scale-105 transition-transform duration-300" />

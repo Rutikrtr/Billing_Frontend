@@ -706,10 +706,10 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
                 <div className="p-6 border-r-2 border-red-600">
                   <h3 className="text-lg font-bold text-red-800 mb-3 border-b border-red-300 pb-2">BILL TO:</h3>
                   <div className="space-y-2">
-                    <div className="font-semibold text-gray-900">{bill.customerName || 'Customer Name'}</div>
-                    <div className="text-gray-700">{bill.customerAddress || 'Customer Address'}</div>
-                    <div className="text-gray-700">Phone: {bill.customerPhone || 'N/A'}</div>
-                    <div className="text-gray-700">GST: {bill.customerGST || 'N/A'}</div>
+                    <div className="font-semibold text-gray-900">{customer.customerName || 'Customer Name'}</div>
+                    <div className="text-gray-700">{customer.customerAddress || 'Customer Address'}</div>
+                    <div className="text-gray-700">Phone: {customer.customerPhone || 'N/A'}</div>
+                    <div className="text-gray-700">GST: {customer.customerGST || 'N/A'}</div>
                   </div>
                 </div>
                 <div className="p-6">
