@@ -10,6 +10,7 @@ import Overview from './Overview/Overview';
 import ClOverview from './Client-Overview/ClOverview';
 import Clients from './Clients/index';
 import Transaction from './Transaction/Transaction';
+import Expences from './Vehicle-Expences/Expences';
 
 
 const Dashboard = () => {
@@ -28,6 +29,7 @@ const Dashboard = () => {
         <Route path="overview" element={<Overview />} />
         <Route path="client-overview" element={<ClOverview />} />
         <Route path="transaction-history" element={<Transaction />} />
+        <Route path="vehicle-expences" element={<Expences />} />
       </Route>
     </Routes>
   );

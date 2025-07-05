@@ -29,7 +29,10 @@ const navItems = [
   {
     icon: <Car />,
     name: "Vehicles",
-    path: "/dashboard/vehicle",
+    subItems: [
+      { name: "Add & Edit Vehicle",  path: "/dashboard/vehicle", pro: false },
+      { name: "Vehicle Expences", path: "/dashboard/vehicle-expences", pro: false },
+    ],
   },
   {
      icon: <Receipt />,
@@ -59,8 +62,6 @@ const AppSidebar = () => {
   const location = useLocation();
 
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const [subMenuHeight, setSubMenuHeight] = useState({});
-  const subMenuRefs = useRef({});
 
   const isActive = useCallback(
     (path) => {
@@ -91,22 +92,6 @@ const AppSidebar = () => {
     }
   }, [location, isActive]);
 
-  // Calculate submenu height when it opens
-  useEffect(() => {
-    if (openSubmenu !== null && subMenuRefs.current[openSubmenu]) {
-      const element = subMenuRefs.current[openSubmenu];
-      // Small delay to ensure the element is rendered
-      setTimeout(() => {
-        if (element) {
-          setSubMenuHeight((prevHeights) => ({
-            ...prevHeights,
-            [openSubmenu]: element.scrollHeight,
-          }));
-        }
-      }, 10);
-    }
-  }, [openSubmenu, isExpanded, isHovered, isMobileOpen]);
-
   const handleSubmenuToggle = (index) => {
     setOpenSubmenu((prevOpenSubmenu) => {
       if (prevOpenSubmenu === index) {
@@ -121,7 +106,7 @@ const AppSidebar = () => {
       {navItems.map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
-            <>
+            <div>
               <button
                 onClick={() => handleSubmenuToggle(index)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
@@ -157,50 +142,39 @@ const AppSidebar = () => {
                 )}
               </button>
               
-              {/* Submenu - Always render but with smooth height transition */}
-              {(isExpanded || isHovered || isMobileOpen) && (
-                <div
-                  ref={(el) => {
-                    subMenuRefs.current[index] = el;
-                  }}
-                  className="overflow-hidden transition-all duration-300 ease-in-out"
-                  style={{
-                    height: openSubmenu === index ? `${subMenuHeight[index] || 0}px` : "0px",
-                    opacity: openSubmenu === index ? 1 : 0,
-                  }}
-                >
-                  <ul className="mt-2 space-y-1 ml-8">
-                    {nav.subItems.map((subItem) => (
-                      <li key={subItem.name}>
-                        <Link
-                          to={subItem.path}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
-                            isActive(subItem.path)
-                              ? "bg-gradient-to-r from-blue-500/30 to-indigo-500/30 text-blue-200 shadow-md border border-blue-400/20"
-                              : "text-gray-400 hover:text-gray-200 hover:bg-gray-700/30"
-                          }`}
-                        >
-                          <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
-                          {subItem.name}
-                          <span className="flex items-center gap-1 ml-auto">
-                            {subItem.new && (
-                              <span className="px-1.5 py-0.5 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
-                                new
-                              </span>
-                            )}
-                            {subItem.pro && (
-                              <span className="px-1.5 py-0.5 text-xs rounded-full bg-orange-500/20 text-orange-300 border border-orange-400/30">
-                                pro
-                              </span>
-                            )}
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+              {/* Submenu - Simple show/hide without complex height calculations */}
+              {(isExpanded || isHovered || isMobileOpen) && openSubmenu === index && (
+                <ul className="mt-2 space-y-1 ml-8 animate-in slide-in-from-top-1 duration-200">
+                  {nav.subItems.map((subItem) => (
+                    <li key={subItem.name}>
+                      <Link
+                        to={subItem.path}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 ${
+                          isActive(subItem.path)
+                            ? "bg-gradient-to-r from-blue-500/30 to-indigo-500/30 text-blue-200 shadow-md border border-blue-400/20"
+                            : "text-gray-400 hover:text-gray-200 hover:bg-gray-700/30"
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60"></span>
+                        {subItem.name}
+                        <span className="flex items-center gap-1 ml-auto">
+                          {subItem.new && (
+                            <span className="px-1.5 py-0.5 text-xs rounded-full bg-green-500/20 text-green-300 border border-green-400/30">
+                              new
+                            </span>
+                          )}
+                          {subItem.pro && (
+                            <span className="px-1.5 py-0.5 text-xs rounded-full bg-orange-500/20 text-orange-300 border border-orange-400/30">
+                              pro
+                            </span>
+                          )}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               )}
-            </>
+            </div>
           ) : (
             nav.path && (
               <Link
