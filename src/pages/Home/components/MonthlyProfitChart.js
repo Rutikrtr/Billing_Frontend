@@ -16,10 +16,7 @@ const MonthlyProfitChart = () => {
   const [totalSales, setTotalSales] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
-  const months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
+
 
   const monthsShort = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -555,7 +552,7 @@ const MonthlyProfitChart = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
           <div className="flex flex-col gap-1">
             <p className="font-medium">
-              Formula: Net Profit = Sales - (Fuel + Other Expenses)
+              Net Profit = Sales - (Fuel + Other Expenses)
             </p>
             <p>Year: {selectedYear} | Average Monthly Profit: {formatCurrency(totalProfit / 12)}</p>
           </div>

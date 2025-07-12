@@ -12,7 +12,7 @@ const Home = () => {
     totalVehicles: 0,
     pendingBills: 0,
   });
-  const [customersData, setCustomersData] = useState([]);
+ 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -24,7 +24,6 @@ const Home = () => {
 
         if (apiResponse?.success && Array.isArray(apiResponse.data)) {
           const customers = apiResponse.data;
-          setCustomersData(customers);
 
           const totalCustomers = customers.length;
           let totalVehicles = 0;
