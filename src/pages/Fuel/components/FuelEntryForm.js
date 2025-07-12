@@ -6,6 +6,7 @@ import api from '../../../utils/axiosSetup';
 const FuelEntryForm = ({ fuelFormData, setFuelFormData, setShowFuelForm, petrolPumps, vehicles, fetchFuelEntries }) => {
   const [fuelFormErrors, setFuelFormErrors] = useState({});
   const [submitLoading, setSubmitLoading] = useState(false);
+  const [vehicleDropdown, setVehicleDropdown] = useState({ openIndex: null, searchTerm: '' });
 
   const handleVehicleChange = (index, vehicleNumber) => {
     const selectedVehicle = vehicles.find(v => v.vehicleNumber === vehicleNumber);
@@ -46,6 +47,21 @@ const FuelEntryForm = ({ fuelFormData, setFuelFormData, setShowFuelForm, petrolP
       delete newErrors[`fuelEntries.${index}.${field}`];
       setFuelFormErrors(newErrors);
     }
+  };
+
+  const handleVehicleSearch = (e) => {
+    setVehicleDropdown(prev => ({
+      ...prev,
+      searchTerm: e.target.value
+    }));
+  };
+
+  const handleVehicleDropdownToggle = (index) => {
+    setVehicleDropdown(prev => ({
+      ...prev,
+      openIndex: prev.openIndex === index ? null : index,
+      searchTerm: ''
+    }));
   };
 
   const addFuelEntry = () => {
@@ -194,18 +210,80 @@ const FuelEntryForm = ({ fuelFormData, setFuelFormData, setShowFuelForm, petrolP
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Vehicle Number *
                     </label>
-                    <select
-                      value={entry.vehicleNumber}
-                      onChange={(e) => handleVehicleChange(index, e.target.value)}
-                      className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white ${fuelFormErrors[`fuelEntries.${index}.vehicleNumber`] ? 'border-red-500' : 'border-gray-300'}`}
-                    >
-                      <option value="">Select vehicle...</option>
-                      {vehicles.map(vehicle => (
-                        <option key={vehicle._id} value={vehicle.vehicleNumber}>
-                          {vehicle.vehicleNumber}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => handleVehicleDropdownToggle(index)}
+                        className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500 dark:text-white text-left flex items-center justify-between ${fuelFormErrors[`fuelEntries.${index}.vehicleNumber`] ? 'border-red-500' : 'border-gray-300'}`}
+                      >
+                        <span className={entry.vehicleNumber ? 'text-gray-900 dark:text-white' : 'text-gray-500 dark:text-gray-400'}>
+                          {entry.vehicleNumber || 'Select vehicle...'}
+                        </span>
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Vehicle Dropdown */}
+                      {vehicleDropdown.openIndex === index && (
+                        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto">
+                          {/* Search Input */}
+                          <div className="p-2 border-b border-gray-200 dark:border-gray-700">
+                            <div className="relative">
+                              <input
+                                type="text"
+                                placeholder="Search vehicles..."
+                                value={vehicleDropdown.searchTerm}
+                                onChange={handleVehicleSearch}
+                                className="w-full pl-8 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white text-sm"
+                                autoFocus
+                              />
+                              <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                              </svg>
+                            </div>
+                          </div>
+
+                          {/* Vehicle Options */}
+                          <div className="max-h-48 overflow-y-auto">
+                            {vehicles
+                              .filter(vehicle =>
+                                !vehicleDropdown.searchTerm ||
+                                vehicle.vehicleNumber.toLowerCase().includes(vehicleDropdown.searchTerm.toLowerCase()) ||
+                                (vehicle.vehicleType && vehicle.vehicleType.toLowerCase().includes(vehicleDropdown.searchTerm.toLowerCase()))
+                              )
+                              .map(vehicle => (
+                                <div
+                                  key={vehicle._id}
+                                  onClick={() => {
+                                    handleVehicleChange(index, vehicle.vehicleNumber);
+                                    setVehicleDropdown({ openIndex: null, searchTerm: '' });
+                                  }}
+                                  className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                >
+                                  <div className="font-medium">{vehicle.vehicleNumber}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {vehicle.vehicleType && `${vehicle.vehicleType} | `}
+                                    {vehicle.rate && `₹${vehicle.rate}`}
+                                    {vehicle.unit && `/${vehicle.unit.toLowerCase()}`}
+                                  </div>
+                                </div>
+                              ))
+                            }
+
+                            {vehicles.filter(v =>
+                              !vehicleDropdown.searchTerm ||
+                              v.vehicleNumber.toLowerCase().includes(vehicleDropdown.searchTerm.toLowerCase()) ||
+                              (v.vehicleType && v.vehicleType.toLowerCase().includes(vehicleDropdown.searchTerm.toLowerCase()))
+                            ).length === 0 && (
+                                <div className="px-4 py-3 text-gray-500 dark:text-gray-400 text-center">
+                                  No vehicles found
+                                </div>
+                              )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     {fuelFormErrors[`fuelEntries.${index}.vehicleNumber`] && (
                       <p className="mt-1 text-sm text-red-600">{fuelFormErrors[`fuelEntries.${index}.vehicleNumber`]}</p>
                     )}

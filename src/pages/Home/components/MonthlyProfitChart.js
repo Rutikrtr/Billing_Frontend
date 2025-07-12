@@ -2,7 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { TrendingUp, BarChart3, DollarSign, TrendingDown, Calculator, RefreshCw } from 'lucide-react';
 import api from '../../../utils/axiosSetup';
-
+const monthsShort = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  ];
 const MonthlyProfitChart = () => {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,202 +21,175 @@ const MonthlyProfitChart = () => {
 
 
 
-  const monthsShort = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-  ];
+
 
   // Process customer data to get monthly sales
-  const processMonthlyData = useCallback((customersData) => {
-    const monthlyTotals = new Array(12).fill(0);
-    
-    if (!customersData || !Array.isArray(customersData)) {
-      return monthlyTotals;
-    }
-    
-    customersData.forEach(customer => {
-      if (customer.latestBills && Array.isArray(customer.latestBills)) {
-        customer.latestBills.forEach(bill => {
-          if ((bill.status === "Paid" || bill.status === "Pending") && bill.date) {
-            try {
-              const billDate = new Date(bill.date);
-              const month = billDate.getMonth();
-              const year = billDate.getFullYear();
-              
-              if (year === selectedYear && month >= 0 && month < 12) {
-                monthlyTotals[month] += bill.netAmount || 0;
-              }
-            } catch (dateError) {
-              console.warn('Invalid date format in bill:', bill.date);
-            }
-          }
-        });
-      }
-    });
-    
+  const processBillsData = useCallback((billsData) => {
+  const monthlyTotals = new Array(12).fill(0);
+  
+  if (!billsData || !Array.isArray(billsData)) {
     return monthlyTotals;
-  }, [selectedYear]);
+  }
+  
+  billsData.forEach(item => {
+    const monthIndex = monthsShort.indexOf(item.month);
+    if (monthIndex !== -1) {
+      monthlyTotals[monthIndex] = item.totalBillAmount || 0;
+    }
+  });
+  
+  return monthlyTotals;
+}, []);
 
   // Extract available years from the data
-  const extractAvailableYears = useCallback((customersData, fuelData, expenseData) => {
-    const yearsSet = new Set();
-    
-    // Extract years from customer data
-    if (customersData && Array.isArray(customersData)) {
-      customersData.forEach(customer => {
-        if (customer.latestBills && Array.isArray(customer.latestBills)) {
-          customer.latestBills.forEach(bill => {
-            if ((bill.status === "Paid" || bill.status === "Pending") && bill.date) {
-              try {
-                const billDate = new Date(bill.date);
-                const year = billDate.getFullYear();
-                if (year > 2000 && year <= new Date().getFullYear() + 1) {
-                  yearsSet.add(year);
-                }
-              } catch (dateError) {
-                console.warn('Invalid date format in bill:', bill.date);
-              }
-            }
-          });
-        }
-      });
-    }
-    
-    // Extract years from fuel data
-    if (fuelData && Array.isArray(fuelData)) {
-      fuelData.forEach(item => {
-        if (item.year && item.year > 2000 && item.year <= new Date().getFullYear() + 1) {
-          yearsSet.add(item.year);
-        }
-      });
-    }
-    
-    // Extract years from expense data
-    if (expenseData && Array.isArray(expenseData)) {
-      expenseData.forEach(item => {
-        if (item.year && item.year > 2000 && item.year <= new Date().getFullYear() + 1) {
-          yearsSet.add(item.year);
-        }
-      });
-    }
-    
-    // Always include current year
-    yearsSet.add(new Date().getFullYear());
-    
-    return Array.from(yearsSet).sort((a, b) => b - a);
-  }, []);
+  const extractAvailableYearsFromBills = useCallback((billsData, fuelData, expenseData) => {
+  const yearsSet = new Set();
+  
+  // Extract years from bills data
+  if (billsData && Array.isArray(billsData)) {
+    billsData.forEach(item => {
+      if (item.year && item.year > 2000 && item.year <= new Date().getFullYear() + 1) {
+        yearsSet.add(item.year);
+      }
+    });
+  }
+  
+  // Extract years from fuel data
+  if (fuelData && Array.isArray(fuelData)) {
+    fuelData.forEach(item => {
+      if (item.year && item.year > 2000 && item.year <= new Date().getFullYear() + 1) {
+        yearsSet.add(item.year);
+      }
+    });
+  }
+  
+  // Extract years from expense data
+  if (expenseData && Array.isArray(expenseData)) {
+    expenseData.forEach(item => {
+      if (item.year && item.year > 2000 && item.year <= new Date().getFullYear() + 1) {
+        yearsSet.add(item.year);
+      }
+    });
+  }
+  
+  // Always include current year
+  yearsSet.add(new Date().getFullYear());
+  
+  return Array.from(yearsSet).sort((a, b) => b - a);
+}, []);
 
   const fetchProfitData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      // Fetch all data with proper error handling
-      const requests = [
-        api.get('/customer').catch(err => ({ data: { success: false, error: err.message } })),
-        api.get('/fuel/getFuelChartData', { params: { year: selectedYear } }).catch(err => ({ data: { success: false, error: err.message } })),
-        api.get('/user/expenses/chart-data', { params: { year: selectedYear } }).catch(err => ({ data: { success: false, error: err.message } }))
-      ];
+  setLoading(true);
+  setError(null);
+  
+  try {
+    // Updated API calls using the bills endpoints
+    const requests = [
+      api.get('/bill/chart-data', { params: { year: selectedYear } }).catch(err => ({ data: { success: false, error: err.message } })),
+      api.get('/fuel/getFuelChartData', { params: { year: selectedYear } }).catch(err => ({ data: { success: false, error: err.message } })),
+      api.get('/user/expenses/chart-data', { params: { year: selectedYear } }).catch(err => ({ data: { success: false, error: err.message } }))
+    ];
 
-      const [salesResponse, fuelResponse, expenseResponse] = await Promise.all(requests);
+    const [billsResponse, fuelResponse, expenseResponse] = await Promise.all(requests);
 
-      // Check for API errors
-      const errors = [];
-      if (!salesResponse.data?.success) errors.push('Sales data');
-      if (!fuelResponse.data?.success) errors.push('Fuel data');
-      if (!expenseResponse.data?.success) errors.push('Expense data');
+    // Check for API errors
+    const errors = [];
+    if (!billsResponse.data?.success) errors.push('Bills data');
+    if (!fuelResponse.data?.success) errors.push('Fuel data');
+    if (!expenseResponse.data?.success) errors.push('Expense data');
 
-      if (errors.length === 3) {
-        throw new Error('Failed to fetch all required data');
-      }
-
-      // Use fallback data for failed requests
-      const customersData = salesResponse.data?.success ? salesResponse.data.data || [] : [];
-      const fuelData = fuelResponse.data?.success ? fuelResponse.data.data || [] : [];
-      const expenseData = expenseResponse.data?.success ? expenseResponse.data.data || [] : [];
-
-      // Extract available years from all data sources
-      const years = extractAvailableYears(customersData, fuelData, expenseData);
-      setAvailableYears(years);
-      
-      // Set default year to the most recent available year if current selection is not available
-      if (years.length > 0 && !years.includes(selectedYear)) {
-        setSelectedYear(years[0]);
-        return; // This will trigger another fetch with the new year
-      }
-      
-      const salesData = processMonthlyData(customersData);
-
-      // Create maps for fuel and expense data
-      const fuelMap = {};
-      const expenseMap = {};
-
-      // Process fuel data
-      if (Array.isArray(fuelData)) {
-        fuelData.forEach(item => {
-          const monthIndex = monthsShort.indexOf(item.month);
-          if (monthIndex !== -1) {
-            fuelMap[monthIndex] = item.totalFuelAmount || 0;
-          }
-        });
-      }
-
-      // Process expense data
-      if (Array.isArray(expenseData)) {
-        expenseData.forEach(item => {
-          const monthIndex = monthsShort.indexOf(item.month);
-          if (monthIndex !== -1) {
-            expenseMap[monthIndex] = item.totalExpenseAmount || 0;
-          }
-        });
-      }
-
-      // Calculate profit for each month
-      const profitData = salesData.map((sales, index) => {
-        const fuel = fuelMap[index] || 0;
-        const expenses = expenseMap[index] || 0;
-        const totalCosts = fuel + expenses;
-        const profit = sales - totalCosts;
-        
-        return {
-          month: monthsShort[index],
-          sales: sales,
-          fuel: fuel,
-          expenses: expenses,
-          totalCosts: totalCosts,
-          profit: profit,
-          profitMargin: sales > 0 ? parseFloat(((profit / sales) * 100).toFixed(1)) : 0
-        };
-      });
-
-      setChartData(profitData);
-      
-      // Calculate totals for the year
-      const totals = profitData.reduce((acc, item) => ({
-        profit: acc.profit + item.profit,
-        expenses: acc.expenses + item.expenses,
-        fuel: acc.fuel + item.fuel,
-        sales: acc.sales + item.sales
-      }), { profit: 0, expenses: 0, fuel: 0, sales: 0 });
-      
-      setTotalProfit(totals.profit);
-      setTotalExpenses(totals.expenses);
-      setTotalFuelCost(totals.fuel);
-      setTotalSales(totals.sales);
-
-      // Show warning if some data sources failed
-      if (errors.length > 0) {
-        setError(`Warning: Could not load ${errors.join(', ')}. Showing partial data.`);
-      }
-
-    } catch (err) {
-      console.error('Error fetching profit data:', err);
-      setError(err.message || 'Failed to fetch profit data');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+    if (errors.length === 3) {
+      throw new Error('Failed to fetch all required data');
     }
-  }, [selectedYear, processMonthlyData, extractAvailableYears]);
+
+    // Use fallback data for failed requests
+    const billsData = billsResponse.data?.success ? billsResponse.data.data || [] : [];
+    const fuelData = fuelResponse.data?.success ? fuelResponse.data.data || [] : [];
+    const expenseData = expenseResponse.data?.success ? expenseResponse.data.data || [] : [];
+
+    // Extract available years from bills data
+    const years = extractAvailableYearsFromBills(billsData, fuelData, expenseData);
+    setAvailableYears(years);
+    
+    // Set default year to the most recent available year if current selection is not available
+    if (years.length > 0 && !years.includes(selectedYear)) {
+      setSelectedYear(years[0]);
+      return; // This will trigger another fetch with the new year
+    }
+    
+    // Process bills data to get monthly sales
+    const salesData = processBillsData(billsData);
+
+    // Create maps for fuel and expense data (keep existing logic)
+    const fuelMap = {};
+    const expenseMap = {};
+
+    // Process fuel data (keep existing logic)
+    if (Array.isArray(fuelData)) {
+      fuelData.forEach(item => {
+        const monthIndex = monthsShort.indexOf(item.month);
+        if (monthIndex !== -1) {
+          fuelMap[monthIndex] = item.totalFuelAmount || 0;
+        }
+      });
+    }
+
+    // Process expense data (keep existing logic)
+    if (Array.isArray(expenseData)) {
+      expenseData.forEach(item => {
+        const monthIndex = monthsShort.indexOf(item.month);
+        if (monthIndex !== -1) {
+          expenseMap[monthIndex] = item.totalExpenseAmount || 0;
+        }
+      });
+    }
+
+    // Calculate profit for each month (keep existing logic)
+    const profitData = salesData.map((sales, index) => {
+      const fuel = fuelMap[index] || 0;
+      const expenses = expenseMap[index] || 0;
+      const totalCosts = fuel + expenses;
+      const profit = sales - totalCosts;
+      
+      return {
+        month: monthsShort[index],
+        sales: sales,
+        fuel: fuel,
+        expenses: expenses,
+        totalCosts: totalCosts,
+        profit: profit,
+        profitMargin: sales > 0 ? parseFloat(((profit / sales) * 100).toFixed(1)) : 0
+      };
+    });
+
+    setChartData(profitData);
+    
+    // Calculate totals for the year (keep existing logic)
+    const totals = profitData.reduce((acc, item) => ({
+      profit: acc.profit + item.profit,
+      expenses: acc.expenses + item.expenses,
+      fuel: acc.fuel + item.fuel,
+      sales: acc.sales + item.sales
+    }), { profit: 0, expenses: 0, fuel: 0, sales: 0 });
+    
+    setTotalProfit(totals.profit);
+    setTotalExpenses(totals.expenses);
+    setTotalFuelCost(totals.fuel);
+    setTotalSales(totals.sales);
+
+    // Show warning if some data sources failed
+    if (errors.length > 0) {
+      setError(`Warning: Could not load ${errors.join(', ')}. Showing partial data.`);
+    }
+
+  } catch (err) {
+    console.error('Error fetching profit data:', err);
+    setError(err.message || 'Failed to fetch profit data');
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+},  [selectedYear, processBillsData, extractAvailableYearsFromBills]);
 
   useEffect(() => {
     fetchProfitData();

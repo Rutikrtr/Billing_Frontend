@@ -13,6 +13,7 @@ import {
   Receipt,
   Fuel,
   BarChart3,
+  HelpCircle,
 } from "lucide-react";
 
 const navItems = [
@@ -243,7 +244,7 @@ const AppSidebar = () => {
         </Link>
       </div>
 
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear scrollbar-hide">
+      <div className="flex flex-col overflow-y-auto duration-300 ease-linear scrollbar-hide flex-1">
         <nav className="mb-6">
           <div className="flex flex-col gap-6">
             <div>
@@ -260,6 +261,35 @@ const AppSidebar = () => {
             </div>
           </div>
         </nav>
+      </div>
+
+      {/* Support Button at Bottom */}
+      <div className="mt-auto mb-6 px-0">
+        <Link
+          to="/dashboard/support"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-300 group relative overflow-hidden ${
+            isActive("/dashboard/support")
+              ? "bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-white shadow-lg shadow-green-500/10 border border-green-400/30 backdrop-blur-sm"
+              : "text-gray-300 hover:bg-gradient-to-r hover:from-green-700/40 hover:to-green-600/20 hover:text-white hover:shadow-md hover:shadow-green-900/20 border border-transparent hover:border-green-600/30 backdrop-blur-sm"
+          } ${
+            !isExpanded && !isHovered
+              ? "lg:justify-center"
+              : "lg:justify-start"
+          }`}
+        >
+          <span
+            className={`flex-shrink-0 w-5 h-5 transition-all duration-300 ${
+              isActive("/dashboard/support")
+                ? "text-green-300 drop-shadow-sm"
+                : "text-gray-400 group-hover:text-green-200 group-hover:scale-110"
+            }`}
+          >
+            <HelpCircle />
+          </span>
+          {(isExpanded || isHovered || isMobileOpen) && (
+            <span className="font-medium text-sm tracking-wide">Support</span>
+          )}
+        </Link>
       </div>
     </aside>
   );
