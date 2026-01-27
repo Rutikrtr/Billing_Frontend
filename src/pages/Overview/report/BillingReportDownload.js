@@ -22,20 +22,19 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     })}`;
   };
 
-  // ✅ FIXED: Get only pending bills
+  // ✅ Get only pending bills
   const getBillsToDisplay = (customer) => {
-    // Get all bills and filter only pending ones
     const allBills = customer.allBills || [];
     return allBills.filter(bill => bill.pendingAmount > 0);
   };
 
-  // ✅ FIXED: Calculate totals from pending bills only
+  // ✅ Calculate totals from pending bills only
   const getCustomerSummary = (customer) => {
     const pendingBills = getBillsToDisplay(customer);
     
     const totalAmount = pendingBills.reduce((sum, bill) => sum + (bill.netAmount || 0), 0);
     const pendingAmount = pendingBills.reduce((sum, bill) => sum + (bill.pendingAmount || 0), 0);
-    const paidAmount = totalAmount - pendingAmount; // Calculate paid as total - pending
+    const paidAmount = totalAmount - pendingAmount;
     
     return {
       totalAmount,
@@ -72,11 +71,10 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     return 'RS. ' + words.trim() + ' ONLY';
   };
 
-  // Generate bill details for the तपशील column (vehicle number, type, product)
+  // Generate bill details
   const generateBillDetails = (bill) => {
     let details = [];
     
-    // Add vehicle details
     if (bill.vehicles && bill.vehicles.length > 0) {
       bill.vehicles.forEach((vehicle, index) => {
         const vehicleInfo = [];
@@ -85,7 +83,7 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
         if (vehicle.product) vehicleInfo.push(`${vehicle.product}`);
         
         details.push(`
-          <div style="margin-bottom: 4px; padding-bottom: 4px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''}">
+          <div style="margin-bottom: 4px; padding-bottom: 4px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #fca5a5;' : ''}">
             <div style="font-size: 7.5pt; line-height: 1.4;">
               ${vehicleInfo.join(' - ')}
             </div>
@@ -93,7 +91,6 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
         `);
       });
     } else {
-      // Single vehicle bill
       const vehicleInfo = [];
       if (bill.vehicleNumber) vehicleInfo.push(`${bill.vehicleNumber}`);
       if (bill.vehicleType) vehicleInfo.push(`${bill.vehicleType}`);
@@ -108,7 +105,6 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
       }
     }
     
-    // Add extra charges if any
     if (bill.extraCharges && bill.extraCharges.length > 0) {
       details.push(`
         <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #dc2626;">
@@ -126,7 +122,6 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     return details.join('');
   };
 
-  // Get quantity for a bill (sum of all vehicles)
   const getBillQuantity = (bill) => {
     if (bill.vehicles && bill.vehicles.length > 0) {
       return bill.vehicles.reduce((sum, vehicle) => sum + (vehicle.quantity || 0), 0);
@@ -134,10 +129,8 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     return bill.quantity || 0;
   };
 
-  // Get rate for a bill (weighted average or single rate)
   const getBillRate = (bill) => {
     if (bill.vehicles && bill.vehicles.length > 0) {
-      // Calculate weighted average rate
       const totalAmount = bill.vehicles.reduce((sum, vehicle) => 
         sum + ((vehicle.quantity || 0) * (vehicle.rate || 0)), 0
       );
@@ -149,6 +142,14 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     return bill.rate || 0;
   };
 
+  // 🎯 Centralized logo location
+  const getLogoUrl = (logoType = 'primary') => {
+    return logoType === 'secondary'
+      ? `${window.location.origin}/logo1.png`
+      : `${window.location.origin}/logo2.png`;
+  };
+
+
   // Generate PDF-ready HTML content
   const generateCustomerPDFContent = (customer) => {
     const bills = getBillsToDisplay(customer);
@@ -156,12 +157,10 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     const reportDate = formatDate(new Date());
     const summary = getCustomerSummary(customer);
 
-    // ✅ FIXED: Use calculated summary amounts
     const totalBillAmount = summary.totalAmount;
     const paidAmount = summary.paidAmount;
     const netPayable = summary.pendingAmount;
 
-    // Calculate minimum rows to fill the page (at least 10 rows for good A4 fill)
     const minRows = 10;
     const emptyRowsNeeded = Math.max(0, minRows - bills.length);
 
@@ -202,57 +201,113 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
             flex-direction: column;
           }
 
-          /* Header Section */
+          /* Header Section - RED THEME */
           .header {
-            border: 2px solid #000;
+            border: 3px solid #dc2626;
             padding: 8px 10px;
             flex-shrink: 0;
+            background: linear-gradient(to bottom, #fef2f2 0%, #ffffff 100%);
           }
 
           .header-grid {
             display: grid;
-            grid-template-columns: 65px 1fr 180px;
+            grid-template-columns: 80px 1fr 80px;
             align-items: center;
-            column-gap: 10px;
+            column-gap: 15px;
           }
 
-          .logo { width: 60px; height: auto; }
+          .logo { 
+            width: 70px; 
+            height: 70px; 
+            object-fit: contain;
+            border: 2px solid #dc2626;
+            border-radius: 4px;
+            padding: 2px;
+            background: #fff;
+          }
 
-          .header-center { text-align: center; }
-          .marathi-title { font-size: 9.5pt; font-weight: bold; margin-bottom: 2px; }
-          .firm-name { font-size: 14pt; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 2px; }
-          .firm-address { font-size: 8.5pt; margin-bottom: 2px; }
-          .firm-services { font-size: 7.5pt; line-height: 1.3; }
+          .header-left {
+            display: flex;
+            justify-content: flex-start;
+          }
 
-          .header-right { text-align: right; font-size: 8.5pt; line-height: 1.5; }
+          .header-right-logo {
+            display: flex;
+            justify-content: flex-end;
+          }
 
-          /* Customer Info */
+          .header-center { 
+            text-align: center;
+            padding: 0 10px;
+          }
+          
+          .marathi-title { 
+            font-size: 10pt; 
+            font-weight: bold; 
+            margin-bottom: 3px;
+            color: #dc2626;
+          }
+          
+          .firm-name { 
+            font-size: 16pt; 
+            font-weight: bold; 
+            letter-spacing: 0.8px; 
+            margin-bottom: 3px;
+            color: #b91c1c;
+            text-transform: uppercase;
+          }
+          
+          .firm-address { 
+            font-size: 8.5pt; 
+            margin-bottom: 2px;
+            color: #991b1b;
+          }
+          
+          .firm-services { 
+            font-size: 7.5pt; 
+            line-height: 1.3;
+            color: #7f1d1d;
+          }
+
+          .firm-contact-info {
+            font-size: 8.5pt;
+            line-height: 1.5;
+            margin-top: 4px;
+            color: #991b1b;
+          }
+          
+          .firm-contact-info strong {
+            color: #dc2626;
+          }
+
+          /* Customer Info - RED THEME */
           .customer-info { 
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
+            border-bottom: 3px solid #dc2626;
             font-size: 8.5pt; 
             flex-shrink: 0;
+            background: #fefefe;
           }
           .ci-row { display: grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; }
           .ci-cell {
-            border-right: 1px solid #ccc;
-            border-bottom: 1px solid #ccc;
+            border-right: 1px solid #fca5a5;
+            border-bottom: 1px solid #fca5a5;
             padding: 5px 8px;
             min-height: 38px;
           }
           .ci-row:last-child .ci-cell { border-bottom: none; }
           .ci-cell:last-child { border-right: none; }
-          .ci-label { font-size: 7.5pt; color: #333; }
-          .ci-value { font-size: 9.5pt; font-weight: bold; margin-top: 3px; }
+          .ci-label { font-size: 7.5pt; color: #991b1b; font-weight: 600; }
+          .ci-value { font-size: 9.5pt; font-weight: bold; margin-top: 3px; color: #1f2937; }
 
-          /* Items Table - Flexible height to fill page */
+          /* Items Table - RED THEME */
           .table-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
           }
 
           .items-table {
@@ -263,13 +318,14 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
           }
 
           .items-table thead th {
-            background: #f5f5f5;
+            background: linear-gradient(to bottom, #fee2e2 0%, #fecaca 100%);
             font-weight: bold;
             text-align: center;
             padding: 8px 5px;
             font-size: 8.5pt;
-            border-bottom: 2px solid #000;
-            border-left: 1px solid #ccc;
+            border-bottom: 2px solid #dc2626;
+            border-left: 1px solid #fca5a5;
+            color: #991b1b;
           }
 
           .items-table thead th:first-child { border-left: none; }
@@ -279,20 +335,19 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
             padding: 8px 6px;
             font-size: 9pt;
             text-align: center;
-            border-left: 1px solid #ccc;
+            border-left: 1px solid #fca5a5;
             vertical-align: top;
           }
 
           .items-table tbody td:first-child { border-left: none; }
           .items-table tbody td:last-child { border-right: none; }
-          .items-table tbody tr:last-child td { border-bottom: 2px solid #000; }
+          .items-table tbody tr:last-child td { border-bottom: 2px solid #dc2626; }
 
           .items-table .text-left { text-align: left; padding-left: 8px; }
           .items-table .text-right { text-align: right; padding-right: 10px; font-weight: bold; }
           .items-table tbody td:nth-child(2) { font-weight: bold; line-height: 1.4; }
           .items-table tbody td:last-child { font-size: 9.5pt; }
 
-          /* Details column styling */
           .items-table .details-cell {
             text-align: left;
             padding: 6px;
@@ -300,54 +355,63 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
             line-height: 1.4;
           }
 
-          /* Empty row styling */
           .items-table tbody tr.empty-row td {
             padding: 8px 6px;
             color: transparent;
           }
 
-          /* Amount in Words */
+          /* Amount in Words - RED THEME */
           .amount-words {
             padding: 10px 12px;
             font-size: 9.5pt;
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
+            border-bottom: 3px solid #dc2626;
             flex-shrink: 0;
+            background: #fef2f2;
           }
-          .amount-words-label { font-weight: bold; }
-          .amount-words-value { margin-left: 10px; text-transform: uppercase; font-weight: bold; }
+          .amount-words-label { font-weight: bold; color: #991b1b; }
+          .amount-words-value { margin-left: 10px; text-transform: uppercase; font-weight: bold; color: #dc2626; }
 
-          /* Summary Section */
+          /* Summary Section - RED THEME */
           .summary-section { 
             padding: 10px 0;
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
+            border-bottom: 3px solid #dc2626;
             flex-shrink: 0;
+            background: #fefefe;
           }
           .summary-row {
             display: flex;
             justify-content: space-between;
             padding: 7px 12px;
             font-size: 10pt;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #fca5a5;
           }
           .summary-row:last-child { border-bottom: none; }
-          .summary-label { flex: 1; }
-          .summary-value { min-width: 130px; text-align: right; font-weight: bold; }
+          .summary-label { flex: 1; color: #991b1b; font-weight: 500; }
+          .summary-value { min-width: 130px; text-align: right; font-weight: bold; color: #1f2937; }
 
           .summary-row.net {
             margin-top: 6px;
             padding: 10px 12px;
             font-size: 11.5pt;
             font-weight: bold;
-            border-top: 2px solid #000;
+            border-top: 2px solid #dc2626;
             border-bottom: none;
-            background: #f0f0f0;
+            background: linear-gradient(to bottom, #fee2e2 0%, #fecaca 100%);
+          }
+          
+          .summary-row.net .summary-label {
+            color: #7f1d1d;
+          }
+          
+          .summary-row.net .summary-value {
+            color: #dc2626;
           }
 
-          /* Signature Section */
+          /* Signature Section - RED THEME */
           .signature-section {
             margin-top: 20px;
             padding: 0 12px;
@@ -356,17 +420,29 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
             font-size: 9.5pt;
             flex-shrink: 0;
           }
-          .signature-line { border-top: 1px solid #000; padding-top: 5px; min-width: 200px; }
-          .signature-name { font-weight: bold; text-align: right; }
+          .signature-line { 
+            border-top: 2px solid #dc2626; 
+            padding-top: 5px; 
+            min-width: 200px;
+            color: #991b1b;
+            font-weight: 500;
+          }
+          .signature-name { 
+            font-weight: bold; 
+            text-align: right;
+            color: #b91c1c;
+            font-size: 10.5pt;
+          }
 
-          /* Footer */
+          /* Footer - RED THEME */
           .footer { 
             margin-top: auto;
             padding-top: 12px;
             text-align: center; 
             font-size: 8pt; 
-            color: #666;
+            color: #991b1b;
             flex-shrink: 0;
+            font-style: italic;
           }
 
           @media print {
@@ -384,24 +460,29 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
       </head>
       <body>
         <div class="bill-container">
-          <!-- Header -->
+          <!-- Header with Two Logos -->
           <div class="header">
             <div class="header-grid">
+              <!-- Left Logo -->
               <div class="header-left">
-                <img src="${user?.logo || 'logo.png'}" class="logo" alt="Logo" />
+                <img src="${getLogoUrl('primary')}" class="logo" alt="Logo" />
               </div>
 
+              <!-- Center Content -->
               <div class="header-center">
-                <div class="marathi-title">॥ ${user?.firmNameMarathi || 'श्री गणेशाय नमः'} ॥</div>
+                <div class="marathi-title">॥ जय मातादी प्रसन्न ॥</div>
                 <div class="firm-name">${user?.firmName || 'LAKSHMI SUPPLIERS'}</div>
                 <div class="firm-address">${user?.address || 'भोलेगांव, अहिल्यानगर - 414111'}</div>
                 <div class="firm-services">${user?.description || ''}</div>
+                <div class="firm-contact-info">
+                  <div><strong>प्रो.</strong> ${user?.proprietor || user?.fullname || '—'} • <strong>मो.</strong> ${user?.phoneNumbers?.primary || '—'}${user?.phoneNumbers?.secondary ? ' / ' + user.phoneNumbers.secondary : ''}</div>
+                  <div><strong>GSTIN:</strong> ${user?.gstNo || user?.jstNo || '—'}</div>
+                </div>
               </div>
 
-              <div class="header-right">
-                <div><strong>प्रो.</strong> ${user?.proprietor || user?.fullname || '—'}</div>
-                <div><strong>मो.</strong> ${user?.phoneNumbers?.primary || '—'}</div>
-                <div><strong>GSTIN:</strong> ${user?.gstNo || user?.jstNo || '—'}</div>
+              <!-- Right Logo -->
+              <div class="header-right-logo">
+                <img src="${getLogoUrl('secondary')}" class="logo" alt="Logo" />
               </div>
             </div>
           </div>
@@ -436,7 +517,7 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
             </div>
           </div>
 
-          <!-- Items Table with flexible height - PENDING BILLS ONLY -->
+          <!-- Items Table - PENDING BILLS ONLY -->
           <div class="table-wrapper">
             <table class="items-table">
               <thead>
@@ -487,7 +568,7 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
                 `).join('')}
                 ${bills.length === 0 ? `
                   <tr>
-                    <td colspan="9" style="text-align: center; padding: 40px; color: #999; font-size: 10pt;">
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #dc2626; font-size: 10pt;">
                       No pending bills found
                     </td>
                   </tr>
@@ -496,13 +577,13 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
             </table>
           </div>
 
-          <!-- Amount in Words - NET PAYABLE -->
+          <!-- Amount in Words -->
           <div class="amount-words">
             <span class="amount-words-label">निव्वळ देय रक्कम अक्षरशः :</span>
             <span class="amount-words-value">${numberToWords(netPayable)}</span>
           </div>
 
-          <!-- Summary Section - SHOWS ALL THREE AMOUNTS -->
+          <!-- Summary Section -->
           <div class="summary-section">
             <div class="summary-row">
               <div class="summary-label">एकूण बिल रक्कम / Total Bill Amount</div>
@@ -564,7 +645,6 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
         const customerName = customer.customerName || customer.name || 'Unknown Customer';
         const summary = getCustomerSummary(customer);
         
-        // Only show button if customer has pending bills
         if (summary.billsCount === 0) {
           return null;
         }

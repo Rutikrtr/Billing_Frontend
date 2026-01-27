@@ -145,7 +145,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
         if (vehicle.product) vehicleInfo.push(`${vehicle.product}`);
         
         details.push(`
-          <div style="margin-bottom: 4px; padding-bottom: 4px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''}">
+          <div style="margin-bottom: 4px; padding-bottom: 4px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #fca5a5;' : ''}">
             <div style="font-size: 7.5pt; line-height: 1.4;">
               ${vehicleInfo.join(' - ')}
             </div>
@@ -155,14 +155,14 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
     } else {
       // Single vehicle bill
       const vehicleInfo = [];
-      if (bill.vehicleNumber) vehicleInfo.push(`वाहन क्र.: ${bill.vehicleNumber}`);
-      if (bill.vehicleType) vehicleInfo.push(`प्रकार: ${bill.vehicleType}`);
-      if (bill.product) vehicleInfo.push(`उत्पादन: ${bill.product}`);
+      if (bill.vehicleNumber) vehicleInfo.push(`${bill.vehicleNumber}`);
+      if (bill.vehicleType) vehicleInfo.push(`${bill.vehicleType}`);
+      if (bill.product) vehicleInfo.push(`${bill.product}`);
       
       if (vehicleInfo.length > 0) {
         details.push(`
           <div style="font-size: 7.5pt; line-height: 1.4;">
-            ${vehicleInfo.join(' • ')}
+            ${vehicleInfo.join(' - ')}
           </div>
         `);
       }
@@ -258,6 +258,13 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
     });
   };
 
+  const getLogoUrl = (logoType = 'primary') => {
+    const base = window.location.origin;
+    return logoType === 'secondary'
+      ? `${base}/logo1.png`
+      : `${base}/logo2.png`;
+  };
+
   // Generate PDF-ready HTML content for selected bills
   const generateCustomerPDFContent = (customer, selectedBillsList) => {
     const customerName = customer.customerName || customer.name || 'Unknown Customer';
@@ -313,57 +320,112 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
             flex-direction: column;
           }
 
-          /* Header Section */
+          /* Header Section - RED THEME */
           .header {
-            border: 2px solid #000;
+            border: 3px solid #dc2626;
             padding: 8px 10px;
             flex-shrink: 0;
+            background: linear-gradient(to bottom, #fef2f2 0%, #ffffff 100%);
           }
 
           .header-grid {
             display: grid;
-            grid-template-columns: 65px 1fr 180px;
+            grid-template-columns: 80px 1fr 80px;
             align-items: center;
-            column-gap: 10px;
+            column-gap: 15px;
           }
 
-          .logo { width: 60px; height: auto; }
+          .logo { 
+            width: 150px; 
+            height: auto; 
+            object-fit: contain;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+          }
 
-          .header-center { text-align: center; }
-          .marathi-title { font-size: 9.5pt; font-weight: bold; margin-bottom: 2px; }
-          .firm-name { font-size: 14pt; font-weight: bold; letter-spacing: 0.5px; margin-bottom: 2px; }
-          .firm-address { font-size: 8.5pt; margin-bottom: 2px; }
-          .firm-services { font-size: 7.5pt; line-height: 1.3; }
+          .header-left {
+            display: flex;
+            justify-content: flex-start;
+          }
 
-          .header-right { text-align: right; font-size: 8.5pt; line-height: 1.5; }
+          .header-right-logo {
+            display: flex;
+            justify-content: flex-end;
+          }
 
-          /* Customer Info */
+          .header-center { 
+            text-align: center;
+            padding: 0 10px;
+          }
+          
+          .marathi-title { 
+            font-size: 10pt; 
+            font-weight: bold; 
+            margin-bottom: 3px;
+            color: #dc2626;
+          }
+          
+          .firm-name { 
+            font-size: 16pt; 
+            font-weight: bold; 
+            letter-spacing: 0.8px; 
+            margin-bottom: 3px;
+            color: #b91c1c;
+            text-transform: uppercase;
+          }
+          
+          .firm-address { 
+            font-size: 8.5pt; 
+            margin-bottom: 2px;
+            color: #991b1b;
+          }
+          
+          .firm-services { 
+            font-size: 7.5pt; 
+            line-height: 1.3;
+            color: #7f1d1d;
+          }
+
+          .firm-contact-info {
+            font-size: 8.5pt;
+            line-height: 1.5;
+            margin-top: 4px;
+            color: #991b1b;
+          }
+          
+          .firm-contact-info strong {
+            color: #dc2626;
+          }
+
+          /* Customer Info - RED THEME */
           .customer-info { 
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
+            border-bottom: 3px solid #dc2626;
             font-size: 8.5pt; 
             flex-shrink: 0;
+            background: #fefefe;
           }
           .ci-row { display: grid; grid-template-columns: 1.2fr 1.2fr 0.8fr; }
           .ci-cell {
-            border-right: 1px solid #ccc;
-            border-bottom: 1px solid #ccc;
+            border-right: 1px solid #fca5a5;
+            border-bottom: 1px solid #fca5a5;
             padding: 5px 8px;
             min-height: 38px;
           }
           .ci-row:last-child .ci-cell { border-bottom: none; }
           .ci-cell:last-child { border-right: none; }
-          .ci-label { font-size: 7.5pt; color: #333; }
-          .ci-value { font-size: 9.5pt; font-weight: bold; margin-top: 3px; }
+          .ci-label { font-size: 7.5pt; color: #991b1b; font-weight: 600; }
+          .ci-value { font-size: 9.5pt; font-weight: bold; margin-top: 3px; color: #1f2937; }
 
-          /* Items Table - Flexible height to fill page */
+          /* Items Table - RED THEME */
           .table-wrapper {
             flex: 1;
             display: flex;
             flex-direction: column;
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
           }
 
           .items-table {
@@ -374,13 +436,14 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           }
 
           .items-table thead th {
-            background: #f5f5f5;
+            background: linear-gradient(to bottom, #fee2e2 0%, #fecaca 100%);
             font-weight: bold;
             text-align: center;
             padding: 8px 5px;
             font-size: 8.5pt;
-            border-bottom: 2px solid #000;
-            border-left: 1px solid #ccc;
+            border-bottom: 2px solid #dc2626;
+            border-left: 1px solid #fca5a5;
+            color: #991b1b;
           }
 
           .items-table thead th:first-child { border-left: none; }
@@ -390,13 +453,13 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
             padding: 8px 6px;
             font-size: 9pt;
             text-align: center;
-            border-left: 1px solid #ccc;
+            border-left: 1px solid #fca5a5;
             vertical-align: top;
           }
 
           .items-table tbody td:first-child { border-left: none; }
           .items-table tbody td:last-child { border-right: none; }
-          .items-table tbody tr:last-child td { border-bottom: 2px solid #000; }
+          .items-table tbody tr:last-child td { border-bottom: 2px solid #dc2626; }
 
           .items-table .text-left { text-align: left; padding-left: 8px; }
           .items-table .text-right { text-align: right; padding-right: 10px; font-weight: bold; }
@@ -417,48 +480,58 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
             color: transparent;
           }
 
-          /* Amount in Words */
+          /* Amount in Words - RED THEME */
           .amount-words {
             padding: 10px 12px;
             font-size: 9.5pt;
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
+            border-bottom: 3px solid #dc2626;
             flex-shrink: 0;
+            background: #fef2f2;
           }
-          .amount-words-label { font-weight: bold; }
-          .amount-words-value { margin-left: 10px; text-transform: uppercase; font-weight: bold; }
+          .amount-words-label { font-weight: bold; color: #991b1b; }
+          .amount-words-value { margin-left: 10px; text-transform: uppercase; font-weight: bold; color: #dc2626; }
 
-          /* Summary Section */
+          /* Summary Section - RED THEME */
           .summary-section { 
             padding: 10px 0;
-            border-left: 2px solid #000;
-            border-right: 2px solid #000;
-            border-bottom: 2px solid #000;
+            border-left: 3px solid #dc2626;
+            border-right: 3px solid #dc2626;
+            border-bottom: 3px solid #dc2626;
             flex-shrink: 0;
+            background: #fefefe;
           }
           .summary-row {
             display: flex;
             justify-content: space-between;
             padding: 7px 12px;
             font-size: 10pt;
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid #fca5a5;
           }
           .summary-row:last-child { border-bottom: none; }
-          .summary-label { flex: 1; }
-          .summary-value { min-width: 130px; text-align: right; font-weight: bold; }
+          .summary-label { flex: 1; color: #991b1b; font-weight: 500; }
+          .summary-value { min-width: 130px; text-align: right; font-weight: bold; color: #1f2937; }
 
           .summary-row.net {
             margin-top: 6px;
             padding: 10px 12px;
             font-size: 11.5pt;
             font-weight: bold;
-            border-top: 2px solid #000;
+            border-top: 2px solid #dc2626;
             border-bottom: none;
-            background: #f0f0f0;
+            background: linear-gradient(to bottom, #fee2e2 0%, #fecaca 100%);
+          }
+          
+          .summary-row.net .summary-label {
+            color: #7f1d1d;
+          }
+          
+          .summary-row.net .summary-value {
+            color: #dc2626;
           }
 
-          /* Signature Section */
+          /* Signature Section - RED THEME */
           .signature-section {
             margin-top: 20px;
             padding: 0 12px;
@@ -467,17 +540,29 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
             font-size: 9.5pt;
             flex-shrink: 0;
           }
-          .signature-line { border-top: 1px solid #000; padding-top: 5px; min-width: 200px; }
-          .signature-name { font-weight: bold; text-align: right; }
+          .signature-line { 
+            border-top: 2px solid #dc2626; 
+            padding-top: 5px; 
+            min-width: 200px;
+            color: #991b1b;
+            font-weight: 500;
+          }
+          .signature-name { 
+            font-weight: bold; 
+            text-align: right;
+            color: #b91c1c;
+            font-size: 10.5pt;
+          }
 
-          /* Footer */
+          /* Footer - RED THEME */
           .footer { 
             margin-top: auto;
             padding-top: 12px;
             text-align: center; 
             font-size: 8pt; 
-            color: #666;
+            color: #991b1b;
             flex-shrink: 0;
+            font-style: italic;
           }
 
           @media print {
@@ -498,21 +583,27 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           <!-- Header -->
           <div class="header">
             <div class="header-grid">
+              <!-- Left Logo -->
               <div class="header-left">
-                <img src="${user?.logo || 'logo.png'}" class="logo" alt="Logo" />
+                <img src="${getLogoUrl('primary')}" class="logo" alt="Logo" />
               </div>
 
+              <!-- Center Content -->
               <div class="header-center">
                 <div class="marathi-title">॥ ${user?.firmNameMarathi || 'श्री गणेशाय नमः'} ॥</div>
                 <div class="firm-name">${user?.firmName || 'LAKSHMI SUPPLIERS'}</div>
                 <div class="firm-address">${user?.address || 'भोलेगांव, अहिल्यानगर - 414111'}</div>
                 <div class="firm-services">${user?.description || ''}</div>
+                <div class="firm-contact-info">
+                  <div><strong>प्रो.</strong> ${user?.proprietor || user?.fullname || '—'}</div>
+                  <div><strong>मो.</strong> ${user?.phoneNumbers?.primary || '—'} ${user?.phoneNumbers?.secondary ? '• ' + user.phoneNumbers.secondary : ''}</div>
+                  <div><strong>GSTIN:</strong> ${user?.gstNo || user?.jstNo || '—'}</div>
+                </div>
               </div>
 
-              <div class="header-right">
-                <div><strong>प्रो.</strong> ${user?.proprietor || user?.fullname || '—'}</div>
-                <div><strong>मो.</strong> ${user?.phoneNumbers?.primary || '—'}</div>
-                <div><strong>GSTIN:</strong> ${user?.gstNo || user?.jstNo || '—'}</div>
+              <!-- Right Logo -->
+              <div class="header-right-logo">
+                <img src="${getLogoUrl('secondary')}" class="logo" alt="Logo" />
               </div>
             </div>
           </div>
@@ -790,8 +881,6 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           const allBillsSelected = bills.length > 0 && bills.every(bill => 
             selectedBills.has(`${customerId}-${bill.billNo}`)
           );
-          
-        
           
           // Disable select all button if another customer's bills are selected
           const isDisabled = selectedCustomerId && selectedCustomerId !== customerId;
