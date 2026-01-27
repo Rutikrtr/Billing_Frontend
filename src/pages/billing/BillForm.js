@@ -3,10 +3,17 @@ import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 
 const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel }) => {
+  // Helper function to get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+
   const [formData, setFormData] = useState({
     customerId: selectedCustomer || '',
     comment: '',
-    extraCharges: [], // Add this line
+    date: getTodayDate(),
+    extraCharges: [],
     entries: [
       {
         vehicleNumber: '',
@@ -17,10 +24,11 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
         cashDiscount: 0,
         from: '',
         to: '',
-        product:''
+        product: ''
       }
     ]
   });
+  
   const [errors, setErrors] = useState({});
   const [submitLoading, setSubmitLoading] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ success: false, message: '' });
@@ -37,7 +45,6 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
     searchTerm: ''
   });
 
-  // Calculate total summary for all entries
   // Calculate total summary for all entries
   const calculateTotalSummary = () => {
     const entriesTotal = formData.entries.reduce((acc, entry) => {
@@ -94,8 +101,6 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
       return nameMatch || phoneMatch || emailMatch || addressMatch;
     });
   };
-
-
 
   // Get selected customer name
   const getSelectedCustomerName = () => {
@@ -162,6 +167,19 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
       ...prev,
       comment: e.target.value
     }));
+  };
+
+  // Add date change handler
+  const handleDateChange = (e) => {
+    setFormData(prev => ({
+      ...prev,
+      date: e.target.value
+    }));
+    
+    // Clear date error if exists
+    if (errors.date) {
+      setErrors(prev => ({ ...prev, date: '' }));
+    }
   };
 
   const handleEntryChange = (index, field, value) => {
@@ -279,11 +297,12 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
     const result = await onSubmit(formData);
 
     if (result.success) {
-      /// Reset form on success
+      // Reset form on success
       setFormData({
         customerId: selectedCustomer || '',
         comment: '',
-        extraCharges: [], // Add this line
+        date: getTodayDate(), // Reset date to today
+        extraCharges: [],
         entries: [
           {
             vehicleNumber: '',
@@ -294,7 +313,7 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
             cashDiscount: 0,
             from: '',
             to: '',
-            product :''
+            product: ''
           }
         ]
       });
@@ -326,8 +345,9 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Customer Selection with Search */}
+        {/* Customer Selection and Date */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+          {/* Customer Selection with Search */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Customer *
@@ -336,8 +356,9 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
               <button
                 type="button"
                 onClick={toggleCustomerDropdown}
-                className={`w-full px-4 py-3 border rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white ${errors.customerId ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                className={`w-full px-4 py-3 border rounded-lg text-left focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white ${
+                  errors.customerId ? 'border-red-500' : 'border-gray-300'
+                }`}
               >
                 {getSelectedCustomerName() ? (
                   <div className="flex justify-between items-center">
@@ -418,8 +439,29 @@ const BillForm = ({ customers, vehicles, selectedCustomer, onSubmit, onCancel })
               <p className="mt-1 text-sm text-red-600">{errors.customerId}</p>
             )}
           </div>
-        </div>
 
+          {/* Date Picker */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Bill Date *
+            </label>
+            <input
+              type="date"
+              value={formData.date}
+              onChange={handleDateChange}
+              max={getTodayDate()} // Prevent selecting future dates
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white ${
+                errors.date ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {errors.date && (
+              <p className="mt-1 text-sm text-red-600">{errors.date}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Select the date for this bill
+            </p>
+          </div>
+        </div>
 
         {/* Vehicle Entries */}
         <div className="space-y-8">

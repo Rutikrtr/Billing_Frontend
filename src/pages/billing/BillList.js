@@ -327,9 +327,6 @@ const BillList = ({
                   <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Route/Unit</th>
                   <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Quantity</th>
                   <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Pending</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Transactions</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Status</th>
                   <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Date</th>
                   <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Actions</th>
                 </tr>
@@ -386,54 +383,13 @@ const BillList = ({
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-4">
-                        <div className={`font-medium ${(bill.pendingAmount || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          ₹{(bill.pendingAmount || 0).toLocaleString()}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col gap-1">
-                          {transactionCount > 0 ? (
-                            <>
-                              <button
-                                onClick={() => handleTransactionClick(bill)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors"
-                              >
-                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                                </svg>
-                                {transactionCount} payment{transactionCount !== 1 ? 's' : ''}
-                              </button>
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                Paid: ₹{totalPaid.toLocaleString()}
-                              </div>
-                            </>
-                          ) : (
-                            <span className="text-xs text-gray-400 dark:text-gray-500">No payments</span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${bill.status === 'Paid'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                          }`}>
-                          {bill.status || 'Unknown'}
-                        </span>
-                      </td>
+                      
                       <td className="py-4 px-4 text-gray-600 dark:text-gray-400 text-sm">
                         {bill.date ? new Date(bill.date).toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex gap-2">
-                          {(bill.pendingAmount || 0) > 0 && (
-                            <button
-                              onClick={() => onPaymentClick(bill)}
-                              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                            >
-                              Received Payment
-                            </button>
-                          )}
+                          
                           <button
                             onClick={() => onShowClick(bill)}
                             className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 transition-colors"

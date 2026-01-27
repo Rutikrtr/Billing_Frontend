@@ -873,24 +873,6 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
         </div>
       </div>
     </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   );
 };
 

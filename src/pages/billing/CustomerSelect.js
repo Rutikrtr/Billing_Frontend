@@ -1,16 +1,17 @@
 // src/pages/billing/CustomerSelect.js
 import React, { useState, useRef, useEffect } from 'react';
-import toast from 'react-hot-toast';
+
 
 const CustomerSelect = ({
   customers,
   selectedCustomer,
   onCustomerChange,
   pendingBillsCount,
-  pendingAmount,
-  bills = [], // Add bills prop to show detailed pending bills
-  onPayFullAmount, // Add callback for full payment
-  onRefreshBills // Add callback to refresh bills after payment
+  pendingAmount, // This comes from the parent component
+  bills = [],
+  onCollectPayment, // New: Open customer payment modal
+  onViewTransactions, // New: Open transaction history modal
+  onPrintBill // NEW: Print pending bills
 }) => {
   const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [showPendingBillsModal, setShowPendingBillsModal] = useState(false);
@@ -88,9 +89,9 @@ const CustomerSelect = ({
     <>
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Customer</h3>
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col gap-4">
+          {/* Customer Dropdown */}
           <div className="flex-1">
-            {/* Custom Searchable Dropdown */}
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
@@ -187,29 +188,70 @@ const CustomerSelect = ({
             </div>
           </div>
 
-          {selectedCustomer && (
-            <div className="flex gap-2">
-              <div className="bg-blue-50 dark:bg-blue-900 px-4 py-2 rounded-lg">
-                <div className="text-sm text-blue-600 dark:text-blue-400">Pending Bills</div>
-                <div className="font-bold text-blue-700 dark:text-blue-300">{pendingBillsCount}</div>
+          {/* Customer Info and Action Buttons */}
+          {selectedCustomer && selectedCustomerDetails && (
+            <div className="space-y-4">
+              {/* Pending Amount Display */}
+              <div className="flex gap-4">
+                <div className="flex-1 bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-lg border border-red-200 dark:border-red-800">
+                  <div className="text-sm text-red-600 dark:text-red-400 font-medium">Pending Amount</div>
+                  <div className="text-2xl font-bold text-red-700 dark:text-red-300 mt-1">
+                    ₹{pendingAmount.toLocaleString()}
+                  </div>
+                  {pendingBillsCount > 0 && (
+                    <button
+                      onClick={handleViewPendingBills}
+                      className="text-xs text-red-600 dark:text-red-400 hover:underline mt-1"
+                    >
+                      {pendingBillsCount} pending bill{pendingBillsCount !== 1 ? 's' : ''}
+                    </button>
+                  )}
+                </div>
               </div>
 
-              <div className="bg-red-50 dark:bg-red-900 px-4 py-2 rounded-lg">
-                <div className="text-sm text-red-600 dark:text-red-400">Pending Amount</div>
-                <div className="font-bold text-red-700 dark:text-red-300">₹{pendingAmount.toLocaleString()}</div>
-              </div>
-
-              {pendingBillsCount > 0 && (
+              {/* Action Buttons - 3 BUTTONS */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Collect Payment Button */}
                 <button
-                  onClick={handleViewPendingBills}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2"
+                  onClick={onCollectPayment}
+                  disabled={pendingAmount <= 0}
+                  className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-green-600 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+                  title={pendingAmount <= 0 ? "No pending amount to collect" : "Collect payment from customer"}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
-                  View Bills
+                  <span className="hidden sm:inline">Collect Payment</span>
+                  <span className="sm:hidden">Payment</span>
                 </button>
-              )}
+                
+                {/* View Transaction History Button */}
+                <button
+                  onClick={onViewTransactions}
+                  className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+                  title="View customer transaction history"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="hidden sm:inline">View Transactions</span>
+                  <span className="sm:hidden">Transactions</span>
+                </button>
+
+                {/* Print Bill Button - NEW */}
+                <button
+                  onClick={onPrintBill}
+                  disabled={pendingAmount <= 0}
+                  className="px-4 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
+                  title={pendingAmount <= 0 ? "No pending bills to print" : "Print pending bills report"}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  <span className="hidden sm:inline">Print Bill</span>
+                  <span className="sm:hidden">Print</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -222,48 +264,19 @@ const CustomerSelect = ({
           pendingBills={pendingBills}
           totalPendingAmount={pendingAmount}
           onClose={() => setShowPendingBillsModal(false)}
-          onPayFullAmount={onPayFullAmount}
-          onRefreshBills={onRefreshBills}
         />
       )}
     </>
   );
 };
 
-// Pending Bills Modal Component
+// Pending Bills Modal Component (Read-only view)
 const PendingBillsModal = ({
   customer,
   pendingBills,
   totalPendingAmount,
-  onClose,
-  onPayFullAmount,
-  onRefreshBills
+  onClose
 }) => {
-  const [isPayingAll, setIsPayingAll] = useState(false);
-
-  const handlePayAllPending = async () => {
-    if (!customer || totalPendingAmount <= 0) return;
-
-    setIsPayingAll(true);
-    try {
-      const result = await onPayFullAmount(customer._id);
-      if (result.success) {
-        // Refresh bills data
-        await onRefreshBills(customer._id);
-        onClose();
-        // Show success message (you can customize this)
-        toast.success(`Successfully received all pending bills! Total amount: ₹${totalPendingAmount.toLocaleString()}`);
-      } else {
-        toast.error(result.message || 'Failed to pay bills');
-      }
-    } catch (error) {
-      console.error('Error paying all bills:', error);
-      toast.error('Error processing payment');
-    } finally {
-      setIsPayingAll(false);
-    }
-  };
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
@@ -349,35 +362,12 @@ const PendingBillsModal = ({
             <div className="text-lg font-semibold text-gray-900 dark:text-white">
               Total Pending Amount: ₹{totalPendingAmount.toLocaleString()}
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={onClose}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
-              >
-                Close
-              </button>
-              <button
-                onClick={handlePayAllPending}
-                disabled={isPayingAll || totalPendingAmount <= 0}
-                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-              >
-                {isPayingAll ? (
-                  <>
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v2" />
-                    </svg>
-                    Recieved All Payment(₹{totalPendingAmount.toLocaleString()})
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Close
+            </button>
           </div>
         </div>
       </div>

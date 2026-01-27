@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { UserIcon } from '../../icons';
 import ClientTableRow from './ClientTableRow';
 
@@ -6,8 +6,11 @@ const ClientList = ({
   clients, 
   loading, 
   handleEditClient, 
-  handleDeleteClient 
+  handleDeleteClient,
+  onNoteUpdate 
 }) => {
+  const [activeNoteId, setActiveNoteId] = useState(null);
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Client List</h3>
@@ -37,7 +40,10 @@ const ClientList = ({
                   key={client._id || index} 
                   client={client} 
                   handleEditClient={handleEditClient} 
-                  handleDeleteClient={handleDeleteClient} 
+                  handleDeleteClient={handleDeleteClient}
+                  onNoteUpdate={onNoteUpdate}
+                  activeNoteId={activeNoteId}
+                  setActiveNoteId={setActiveNoteId}
                 />
               ))}
             </tbody>

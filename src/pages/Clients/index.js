@@ -124,6 +124,13 @@ const Clients = () => {
     setShowDeleteModal(true);
   }, []);
 
+  // NEW: Handle note updates
+  const handleNoteUpdate = useCallback((clientId, newNote) => {
+    setClients(prev => prev.map(client => 
+      client._id === clientId ? { ...client, note: newNote } : client
+    ));
+  }, []);
+
   const confirmDeleteClient = useCallback(async () => {
     if (deleteConfirmText !== clientToDelete.customerName) {
       toast.error('Customer name does not match. Please type the exact customer name.');
@@ -218,6 +225,7 @@ const Clients = () => {
         loading={loading}
         handleEditClient={handleEditClient}
         handleDeleteClient={handleDeleteClient}
+        onNoteUpdate={handleNoteUpdate}
       />
     </div>
   );

@@ -26,6 +26,9 @@ const PaymentModal = ({ bill, onClose, onSubmit }) => {
     setSubmitLoading(false);
   };
 
+  
+
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-6 w-full max-w-md space-y-4">
