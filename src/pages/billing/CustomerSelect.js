@@ -1,39 +1,32 @@
-// src/pages/billing/CustomerSelect.js
 import React, { useState, useRef, useEffect } from 'react';
-
 
 const CustomerSelect = ({
   customers,
   selectedCustomer,
   onCustomerChange,
   pendingBillsCount,
-  pendingAmount, // This comes from the parent component
+  pendingAmount,
   bills = [],
-  onCollectPayment, // New: Open customer payment modal
-  onViewTransactions, // New: Open transaction history modal
-  onPrintBill // NEW: Print pending bills
+  onCollectPayment,
+  onViewTransactions,
+  onPrintBill
 }) => {
-  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
   const [showPendingBillsModal, setShowPendingBillsModal] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownSearchTerm, setDropdownSearchTerm] = useState('');
   const dropdownRef = useRef(null);
   const searchInputRef = useRef(null);
 
-  // Filter customers based on dropdown search term
   const filteredCustomers = customers.filter(customer =>
     !dropdownSearchTerm ||
     customer.customerName.toLowerCase().includes(dropdownSearchTerm.toLowerCase()) ||
     (customer.customerNumber && customer.customerNumber.toLowerCase().includes(dropdownSearchTerm.toLowerCase()))
   );
 
-  // Get pending bills for the selected customer
   const pendingBills = bills.filter(bill => bill.pendingAmount > 0);
 
-  // Get selected customer details
   const selectedCustomerDetails = customers.find(c => c._id === selectedCustomer);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -48,7 +41,6 @@ const CustomerSelect = ({
     };
   }, []);
 
-  // Focus search input when dropdown opens
   useEffect(() => {
     if (isDropdownOpen && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -90,7 +82,6 @@ const CustomerSelect = ({
       <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Select Customer</h3>
         <div className="flex flex-col gap-4">
-          {/* Customer Dropdown */}
           <div className="flex-1">
             <div className="relative" ref={dropdownRef}>
               <button
@@ -114,10 +105,8 @@ const CustomerSelect = ({
                 </svg>
               </button>
 
-              {/* Dropdown Menu */}
               {isDropdownOpen && (
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-80 overflow-hidden">
-                  {/* Search Input */}
                   <div className="p-3 border-b border-gray-200 dark:border-gray-700">
                     <div className="relative">
                       <input
@@ -135,11 +124,9 @@ const CustomerSelect = ({
                     </div>
                   </div>
 
-                  {/* Options List */}
                   <div className="max-h-60 overflow-y-auto">
                     {filteredCustomers.length > 0 ? (
                       <>
-                        {/* Clear Selection Option */}
                         {selectedCustomer && (
                           <div
                             onClick={() => handleCustomerSelect('')}
@@ -188,10 +175,8 @@ const CustomerSelect = ({
             </div>
           </div>
 
-          {/* Customer Info and Action Buttons */}
           {selectedCustomer && selectedCustomerDetails && (
             <div className="space-y-4">
-              {/* Pending Amount Display */}
               <div className="flex gap-4">
                 <div className="flex-1 bg-red-50 dark:bg-red-900/20 px-4 py-3 rounded-lg border border-red-200 dark:border-red-800">
                   <div className="text-sm text-red-600 dark:text-red-400 font-medium">Pending Amount</div>
@@ -209,9 +194,7 @@ const CustomerSelect = ({
                 </div>
               </div>
 
-              {/* Action Buttons - 3 BUTTONS */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* Collect Payment Button */}
                 <button
                   onClick={onCollectPayment}
                   disabled={pendingAmount <= 0}
@@ -225,7 +208,6 @@ const CustomerSelect = ({
                   <span className="sm:hidden">Payment</span>
                 </button>
                 
-                {/* View Transaction History Button */}
                 <button
                   onClick={onViewTransactions}
                   className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center justify-center gap-2 font-medium shadow-sm hover:shadow-md transform hover:scale-[1.02] active:scale-[0.98]"
@@ -238,7 +220,6 @@ const CustomerSelect = ({
                   <span className="sm:hidden">Transactions</span>
                 </button>
 
-                {/* Print Bill Button - NEW */}
                 <button
                   onClick={onPrintBill}
                   disabled={pendingAmount <= 0}
@@ -257,7 +238,6 @@ const CustomerSelect = ({
         </div>
       </div>
 
-      {/* Pending Bills Modal */}
       {showPendingBillsModal && (
         <PendingBillsModal
           customer={selectedCustomerDetails}
@@ -270,7 +250,6 @@ const CustomerSelect = ({
   );
 };
 
-// Pending Bills Modal Component (Read-only view)
 const PendingBillsModal = ({
   customer,
   pendingBills,
@@ -280,7 +259,6 @@ const PendingBillsModal = ({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -300,7 +278,6 @@ const PendingBillsModal = ({
           </button>
         </div>
 
-        {/* Bills List */}
         <div className="p-6 max-h-96 overflow-y-auto">
           <div className="space-y-4">
             {pendingBills.map((bill) => (
@@ -327,7 +304,6 @@ const PendingBillsModal = ({
                   </div>
                 </div>
 
-                {/* Vehicle Details */}
                 <div className="space-y-2">
                   {bill.vehicles?.map((vehicle, index) => (
                     <div key={index} className="text-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 p-2 rounded">
@@ -356,7 +332,6 @@ const PendingBillsModal = ({
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
           <div className="flex items-center justify-between">
             <div className="text-lg font-semibold text-gray-900 dark:text-white">

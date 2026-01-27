@@ -72,49 +72,49 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     return 'RS. ' + words.trim() + ' ONLY';
   };
 
-  // Generate bill details for the new column
+  // Generate bill details for the तपशील column (vehicle number, type, product)
   const generateBillDetails = (bill) => {
     let details = [];
     
     // Add vehicle details
     if (bill.vehicles && bill.vehicles.length > 0) {
       bill.vehicles.forEach((vehicle, index) => {
+        const vehicleInfo = [];
+        if (vehicle.vehicleNumber) vehicleInfo.push(`${vehicle.vehicleNumber}`);
+        if (vehicle.vehicleType) vehicleInfo.push(`${vehicle.vehicleType}`);
+        if (vehicle.product) vehicleInfo.push(`${vehicle.product}`);
+        
         details.push(`
-          <div style="margin-bottom: 6px; padding-bottom: 6px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''}">
-            <div style="font-weight: 600; color: #374151; margin-bottom: 3px; font-size: 8pt;">
-              ${vehicle.vehicleType || 'Truck'}
+          <div style="margin-bottom: 4px; padding-bottom: 4px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''}">
+            <div style="font-size: 7.5pt; line-height: 1.4;">
+              ${vehicleInfo.join(' - ')}
             </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 7.5pt;">
-              <div><strong>संख्या:</strong> ${vehicle.quantity}</div>
-              <div><strong>दर:</strong> ₹${vehicle.rate.toFixed(2)}</div>
-            </div>
-            ${vehicle.product ? `<div style="font-size: 7pt; color: #6b7280; margin-top: 2px;">उत्पादन: ${vehicle.product}</div>` : ''}
           </div>
         `);
       });
     } else {
       // Single vehicle bill
-      details.push(`
-        <div style="margin-bottom: 6px;">
-          <div style="font-weight: 600; color: #374151; margin-bottom: 3px; font-size: 8pt;">
-            ${bill.vehicleType || 'Truck'}
+      const vehicleInfo = [];
+      if (bill.vehicleNumber) vehicleInfo.push(`${bill.vehicleNumber}`);
+      if (bill.vehicleType) vehicleInfo.push(`${bill.vehicleType}`);
+      if (bill.product) vehicleInfo.push(`${bill.product}`);
+      
+      if (vehicleInfo.length > 0) {
+        details.push(`
+          <div style="font-size: 7.5pt; line-height: 1.4;">
+            ${vehicleInfo.join(' - ')}
           </div>
-          <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 7.5pt;">
-            <div><strong>संख्या:</strong> ${bill.quantity || 0}</div>
-            <div><strong>दर:</strong> ₹${(bill.rate || 0).toFixed(2)}</div>
-          </div>
-          ${bill.product ? `<div style="font-size: 7pt; color: #6b7280; margin-top: 2px;">उत्पादन: ${bill.product}</div>` : ''}
-        </div>
-      `);
+        `);
+      }
     }
     
     // Add extra charges if any
     if (bill.extraCharges && bill.extraCharges.length > 0) {
       details.push(`
-        <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
-          <div style="font-weight: 700; color: #dc2626; margin-bottom: 4px; font-size: 7.5pt;">अतिरिक्त शुल्क:</div>
+        <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #dc2626;">
+          <div style="font-weight: 700; color: #dc2626; margin-bottom: 2px; font-size: 7pt;">अतिरिक्त शुल्क:</div>
           ${bill.extraCharges.map(charge => `
-            <div style="display: flex; justify-content: space-between; font-size: 7pt; margin-bottom: 2px;">
+            <div style="display: flex; justify-content: space-between; font-size: 7pt; margin-bottom: 1px;">
               <span style="color: #374151;">${charge.description}</span>
               <span style="font-weight: 600; color: #dc2626;">₹${charge.amount.toFixed(2)}</span>
             </div>
@@ -124,6 +124,29 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     }
     
     return details.join('');
+  };
+
+  // Get quantity for a bill (sum of all vehicles)
+  const getBillQuantity = (bill) => {
+    if (bill.vehicles && bill.vehicles.length > 0) {
+      return bill.vehicles.reduce((sum, vehicle) => sum + (vehicle.quantity || 0), 0);
+    }
+    return bill.quantity || 0;
+  };
+
+  // Get rate for a bill (weighted average or single rate)
+  const getBillRate = (bill) => {
+    if (bill.vehicles && bill.vehicles.length > 0) {
+      // Calculate weighted average rate
+      const totalAmount = bill.vehicles.reduce((sum, vehicle) => 
+        sum + ((vehicle.quantity || 0) * (vehicle.rate || 0)), 0
+      );
+      const totalQuantity = bill.vehicles.reduce((sum, vehicle) => 
+        sum + (vehicle.quantity || 0), 0
+      );
+      return totalQuantity > 0 ? totalAmount / totalQuantity : 0;
+    }
+    return bill.rate || 0;
   };
 
   // Generate PDF-ready HTML content
@@ -419,16 +442,20 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
               <thead>
                 <tr>
                   <th style="width:4%;">अ.क्र.</th>
-                  <th style="width:15%;">बिल क्रमांक</th>
+                  <th style="width:12%;">बिल क्रमांक</th>
                   <th style="width:8%;">दिनांक</th>
                   <th style="width:20%;">तपशील</th>
-                  <th style="width:13%;">एकूण रक्कम</th>
-                  <th style="width:13%;">वसूल रक्कम</th>
+                  <th style="width:8%;">संख्या</th>
+                  <th style="width:10%;">दर</th>
+                  <th style="width:12%;">एकूण रक्कम</th>
+                  <th style="width:12%;">वसूल रक्कम</th>
                   <th style="width:14%;">बाकी रक्कम</th>
                 </tr>
               </thead>
               <tbody>
                 ${bills.length > 0 ? bills.map((bill, index) => {
+                  const quantity = getBillQuantity(bill);
+                  const rate = getBillRate(bill);
                   return `
                     <tr>
                       <td>${index + 1}</td>
@@ -437,6 +464,8 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
                       <td class="details-cell">
                         ${generateBillDetails(bill)}
                       </td>
+                      <td>${quantity}</td>
+                      <td class="text-right">${rate.toFixed(2)}</td>
                       <td class="text-right">${(bill.netAmount || 0).toFixed(2)}</td>
                       <td class="text-right" style="color: #16a34a;">${((bill.netAmount || 0) - (bill.pendingAmount || 0)).toFixed(2)}</td>
                       <td class="text-right" style="color: #dc2626;"><strong>${(bill.pendingAmount || 0).toFixed(2)}</strong></td>
@@ -449,6 +478,8 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
                     <td class="text-left">-</td>
                     <td>-</td>
                     <td>-</td>
+                    <td>-</td>
+                    <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
@@ -456,7 +487,7 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
                 `).join('')}
                 ${bills.length === 0 ? `
                   <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #999; font-size: 10pt;">
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #999; font-size: 10pt;">
                       No pending bills found
                     </td>
                   </tr>

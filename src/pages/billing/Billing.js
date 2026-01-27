@@ -1,4 +1,3 @@
-// src/pages/billing/Billing.js
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import api from '../../utils/axiosSetup';
@@ -21,41 +20,33 @@ const Billing = () => {
   const [filterStatus, setFilterStatus] = useState('All');
   const [searchTerm, setSearchTerm] = useState('');
   
-  // Invoice Print Modal
   const [showInvoicePrint, setShowInvoicePrint] = useState(false);
   const [selectedBillForPrint, setSelectedBillForPrint] = useState(null);
   const [selectedCustomerForPrint, setSelectedCustomerForPrint] = useState(null);
   
-  // Customer Payment Modal
   const [showCustomerPaymentModal, setShowCustomerPaymentModal] = useState(false);
   
-  // Customer Transaction History Modal
   const [showTransactionHistoryModal, setShowTransactionHistoryModal] = useState(false);
   const [customerTransactions, setCustomerTransactions] = useState(null);
 
-  // Fetch customers
   const fetchCustomers = async () => {
     try {
       const response = await api.get('/customer');
       setCustomers(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching customers:', error);
       toast.error('Failed to fetch customers');
     }
   };
 
-  // Fetch vehicles
   const fetchVehicles = async () => {
     try {
       const response = await api.get('/user/vehicle');
       setVehicles(response.data.data || []);
     } catch (error) {
-      console.error('Error fetching vehicles:', error);
       toast.error('Failed to fetch vehicles');
     }
   };
 
-  // Fetch bills for selected customer
   const fetchBills = async (customerId) => {
     if (!customerId) {
       setBills([]);
@@ -67,26 +58,14 @@ const Billing = () => {
       const response = await api.post('/bill/all', { customerId });
       const fetchedBills = response.data.data || [];
       setBills(fetchedBills);
-      
-      console.log('📋 Bills fetched:', fetchedBills.length);
-      console.log('💰 Bill details:', fetchedBills.map(b => ({
-        billNo: b.billNo,
-        netAmount: b.netAmount,
-        amountPaid: b.amountPaid || 0,
-        pendingAmount: b.pendingAmount,
-        status: b.status
-      })));
     } catch (error) {
-      console.error('Error fetching bills:', error);
       setBills([]);
       toast.error('Failed to fetch bills');
     } finally {
       setLoading(false);
     }
   };
-  
 
-  // Fetch customer transactions
   const fetchCustomerTransactions = async (customerId) => {
     if (!customerId) {
       toast.error('Please select a customer first');
@@ -104,12 +83,10 @@ const Billing = () => {
         toast.error('Failed to fetch transaction history');
       }
     } catch (error) {
-      console.error('Error fetching customer transactions:', error);
       toast.error('Failed to fetch transaction history');
     }
   };
 
-  // Handle print customer bill (pending bills)
   const handlePrintCustomerBill = (customerId) => {
     if (!customerId) {
       toast.error('Please select a customer first');
@@ -122,7 +99,6 @@ const Billing = () => {
       return;
     }
 
-    // Filter only pending bills
     const pendingBills = bills.filter(bill => bill.pendingAmount > 0);
     
     if (pendingBills.length === 0) {
@@ -130,19 +106,15 @@ const Billing = () => {
       return;
     }
 
-    // Prepare customer data with bills
     const customerWithBills = {
       ...customer,
-      allBills: bills // Pass all bills, the component will filter pending ones
+      allBills: bills
     };
 
-    // Generate and print the PDF
     generateAndPrintCustomerBill(customerWithBills);
   };
 
-  // Generate and print customer bill PDF
   const generateAndPrintCustomerBill = (customer) => {
-    // Format date for display (DD/MM/YYYY format)
     const formatDate = (date) => {
       return new Date(date).toLocaleDateString('en-IN', {
         day: '2-digit',
@@ -151,7 +123,6 @@ const Billing = () => {
       });
     };
 
-    // Format currency
     const formatCurrency = (amount) => {
       return `₹${amount.toLocaleString('en-IN', { 
         minimumFractionDigits: 2, 
@@ -159,13 +130,11 @@ const Billing = () => {
       })}`;
     };
 
-    // Get only pending bills
     const getBillsToDisplay = (customer) => {
       const allBills = customer.allBills || [];
       return allBills.filter(bill => bill.pendingAmount > 0);
     };
 
-    // Calculate totals from pending bills only
     const getCustomerSummary = (customer) => {
       const pendingBills = getBillsToDisplay(customer);
       
@@ -181,7 +150,6 @@ const Billing = () => {
       };
     };
 
-    // Helper function to convert number to words
     const numberToWords = (num) => {
       if (num === 0) return 'ZERO ONLY';
       
@@ -207,53 +175,31 @@ const Billing = () => {
       return 'RS. ' + words.trim() + ' ONLY';
     };
 
-    // Generate bill details for the new column
     const generateBillDetails = (bill) => {
       let details = [];
       
-      // Add vehicle details
       if (bill.vehicles && bill.vehicles.length > 0) {
         bill.vehicles.forEach((vehicle, index) => {
           details.push(`
             <div style="margin-bottom: 6px; padding-bottom: 6px; ${index < bill.vehicles.length - 1 ? 'border-bottom: 1px solid #e5e7eb;' : ''}">
               <div style="font-weight: 600; color: #374151; margin-bottom: 3px; font-size: 8pt;">
-                ${vehicle.vehicleType || 'Truck'}
+                ${vehicle.vehicleNumber || '—'}
               </div>
-              <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 7.5pt;">
-                <div><strong>संख्या:</strong> ${vehicle.quantity}</div>
-                <div><strong>दर:</strong> ₹${vehicle.rate.toFixed(2)}</div>
+              <div style="font-size: 7.5pt; color: #6b7280;">
+                ${vehicle.vehicleType || 'Truck'}${vehicle.product ? ` • ${vehicle.product}` : ''}
               </div>
-              ${vehicle.product ? `<div style="font-size: 7pt; color: #6b7280; margin-top: 2px;">उत्पादन: ${vehicle.product}</div>` : ''}
             </div>
           `);
         });
       } else {
-        // Single vehicle bill
         details.push(`
           <div style="margin-bottom: 6px;">
             <div style="font-weight: 600; color: #374151; margin-bottom: 3px; font-size: 8pt;">
-              ${bill.vehicleType || 'Truck'}
+              ${bill.vehicleNumber || '—'}
             </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 7.5pt;">
-              <div><strong>संख्या:</strong> ${bill.quantity || 0}</div>
-              <div><strong>दर:</strong> ₹${(bill.rate || 0).toFixed(2)}</div>
+            <div style="font-size: 7.5pt; color: #6b7280;">
+              ${bill.vehicleType || 'Truck'}${bill.product ? ` • ${bill.product}` : ''}
             </div>
-            ${bill.product ? `<div style="font-size: 7pt; color: #6b7280; margin-top: 2px;">उत्पादन: ${bill.product}</div>` : ''}
-          </div>
-        `);
-      }
-      
-      // Add extra charges if any
-      if (bill.extraCharges && bill.extraCharges.length > 0) {
-        details.push(`
-          <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid #dc2626;">
-            <div style="font-weight: 700; color: #dc2626; margin-bottom: 4px; font-size: 7.5pt;">अतिरिक्त शुल्क:</div>
-            ${bill.extraCharges.map(charge => `
-              <div style="display: flex; justify-content: space-between; font-size: 7pt; margin-bottom: 2px;">
-                <span style="color: #374151;">${charge.description}</span>
-                <span style="font-weight: 600; color: #dc2626;">₹${charge.amount.toFixed(2)}</span>
-              </div>
-            `).join('')}
           </div>
         `);
       }
@@ -270,7 +216,6 @@ const Billing = () => {
     const paidAmount = summary.paidAmount;
     const netPayable = summary.pendingAmount;
 
-    // Calculate minimum rows to fill the page
     const minRows = 10;
     const emptyRowsNeeded = Math.max(0, minRows - pendingBills.length);
 
@@ -311,7 +256,6 @@ const Billing = () => {
             flex-direction: column;
           }
 
-          /* Header Section */
           .header {
             border: 2px solid #000;
             padding: 8px 10px;
@@ -335,7 +279,6 @@ const Billing = () => {
 
           .header-right { text-align: right; font-size: 8.5pt; line-height: 1.5; }
 
-          /* Customer Info */
           .customer-info { 
             border-left: 2px solid #000;
             border-right: 2px solid #000;
@@ -355,7 +298,6 @@ const Billing = () => {
           .ci-label { font-size: 7.5pt; color: #333; }
           .ci-value { font-size: 9.5pt; font-weight: bold; margin-top: 3px; }
 
-          /* Items Table */
           .table-wrapper {
             flex: 1;
             display: flex;
@@ -399,7 +341,6 @@ const Billing = () => {
           .items-table .text-left { text-align: left; padding-left: 8px; }
           .items-table .text-right { text-align: right; padding-right: 10px; font-weight: bold; }
           .items-table tbody td:nth-child(2) { font-weight: bold; line-height: 1.4; }
-          .items-table tbody td:last-child { font-size: 9.5pt; }
 
           .items-table .details-cell {
             text-align: left;
@@ -413,7 +354,6 @@ const Billing = () => {
             color: transparent;
           }
 
-          /* Amount in Words */
           .amount-words {
             padding: 10px 12px;
             font-size: 9.5pt;
@@ -425,7 +365,6 @@ const Billing = () => {
           .amount-words-label { font-weight: bold; }
           .amount-words-value { margin-left: 10px; text-transform: uppercase; font-weight: bold; }
 
-          /* Summary Section */
           .summary-section { 
             padding: 10px 0;
             border-left: 2px solid #000;
@@ -454,7 +393,6 @@ const Billing = () => {
             background: #f0f0f0;
           }
 
-          /* Signature Section */
           .signature-section {
             margin-top: 20px;
             padding: 0 12px;
@@ -466,7 +404,6 @@ const Billing = () => {
           .signature-line { border-top: 1px solid #000; padding-top: 5px; min-width: 200px; }
           .signature-name { font-weight: bold; text-align: right; }
 
-          /* Footer */
           .footer { 
             margin-top: auto;
             padding-top: 12px;
@@ -491,7 +428,6 @@ const Billing = () => {
       </head>
       <body>
         <div class="bill-container">
-          <!-- Header -->
           <div class="header">
             <div class="header-grid">
               <div class="header-left">
@@ -513,7 +449,6 @@ const Billing = () => {
             </div>
           </div>
 
-          <!-- Customer Info -->
           <div class="customer-info">
             <div class="ci-row">
               <div class="ci-cell">
@@ -543,22 +478,31 @@ const Billing = () => {
             </div>
           </div>
 
-          <!-- Items Table -->
           <div class="table-wrapper">
             <table class="items-table">
               <thead>
                 <tr>
                   <th style="width:4%;">अ.क्र.</th>
-                  <th style="width:15%;">बिल क्रमांक</th>
+                  <th style="width:12%;">बिल क्रमांक</th>
                   <th style="width:8%;">दिनांक</th>
                   <th style="width:20%;">तपशील</th>
-                  <th style="width:13%;">एकूण रक्कम</th>
-                  <th style="width:13%;">वसूल रक्कम</th>
+                  <th style="width:8%;">संख्या</th>
+                  <th style="width:10%;">दर</th>
+                  <th style="width:12%;">एकूण रक्कम</th>
+                  <th style="width:12%;">वसूल रक्कम</th>
                   <th style="width:14%;">बाकी रक्कम</th>
                 </tr>
               </thead>
               <tbody>
                 ${pendingBills.length > 0 ? pendingBills.map((bill, index) => {
+                  const totalQuantity = bill.vehicles && bill.vehicles.length > 0 
+                    ? bill.vehicles.reduce((sum, v) => sum + (v.quantity || 0), 0)
+                    : (bill.quantity || 0);
+                  
+                  const avgRate = bill.vehicles && bill.vehicles.length > 0 && totalQuantity > 0
+                    ? (bill.netAmount / totalQuantity)
+                    : (bill.rate || 0);
+                  
                   return `
                     <tr>
                       <td>${index + 1}</td>
@@ -567,6 +511,8 @@ const Billing = () => {
                       <td class="details-cell">
                         ${generateBillDetails(bill)}
                       </td>
+                      <td class="text-right">${totalQuantity.toFixed(0)}</td>
+                      <td class="text-right">${avgRate.toFixed(2)}</td>
                       <td class="text-right">${(bill.netAmount || 0).toFixed(2)}</td>
                       <td class="text-right" style="color: #16a34a;">${((bill.netAmount || 0) - (bill.pendingAmount || 0)).toFixed(2)}</td>
                       <td class="text-right" style="color: #dc2626;"><strong>${(bill.pendingAmount || 0).toFixed(2)}</strong></td>
@@ -582,11 +528,13 @@ const Billing = () => {
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
+                    <td class="text-right">-</td>
+                    <td class="text-right">-</td>
                   </tr>
                 `).join('')}
                 ${pendingBills.length === 0 ? `
                   <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #999; font-size: 10pt;">
+                    <td colspan="9" style="text-align: center; padding: 40px; color: #999; font-size: 10pt;">
                       No pending bills found
                     </td>
                   </tr>
@@ -595,13 +543,11 @@ const Billing = () => {
             </table>
           </div>
 
-          <!-- Amount in Words -->
           <div class="amount-words">
             <span class="amount-words-label">निव्वळ देय रक्कम अक्षरशः :</span>
             <span class="amount-words-value">${numberToWords(netPayable)}</span>
           </div>
 
-          <!-- Summary Section -->
           <div class="summary-section">
             <div class="summary-row">
               <div class="summary-label">एकूण बिल रक्कम / Total Bill Amount</div>
@@ -617,13 +563,11 @@ const Billing = () => {
             </div>
           </div>
 
-          <!-- Signature Section -->
           <div class="signature-section">
             <div class="signature-line">ग्राहकाची सही / Customer Signature</div>
             <div class="signature-name">${user?.firmName || 'लक्ष्मी सप्लायर्स'}</div>
           </div>
 
-          <!-- Footer -->
           <div class="footer">This is a computer generated bill • Pending Bills Report • Page 1 of 1</div>
         </div>
       </body>
@@ -651,13 +595,11 @@ const Billing = () => {
     }
   };
   
-  // Handle customer selection change
   const handleCustomerChange = (customerId) => {
     setSelectedCustomer(customerId);
     fetchBills(customerId);
   };
 
-  // Handle bill form submission
   const handleBillSubmit = async (formData) => {
     const newErrors = {};
 
@@ -669,7 +611,6 @@ const Billing = () => {
       newErrors.entries = 'At least one vehicle entry is required';
     }
 
-    // Validate each entry
     const entryErrors = [];
     formData.entries.forEach((entry, index) => {
       const entryError = {};
@@ -705,7 +646,6 @@ const Billing = () => {
       toast.success('Bill created successfully!');
       return { success: true };
     } catch (error) {
-      console.error('Error adding bill:', error);
       const errorMessage = error.response?.data?.message || 'Error adding bill. Please try again.';
       toast.error(errorMessage);
       return {
@@ -715,40 +655,26 @@ const Billing = () => {
     }
   };
 
-  // Handler for customer-level payment collection
   const handleCustomerPaymentSubmit = async (amountPaid, method, reference, isFullAmount = false) => {
-    console.log('💳 Payment Submission:');
-    console.log('- Amount:', amountPaid);
-    console.log('- Method:', method);
-    console.log('- Reference:', reference);
-    console.log('- Is Full Amount:', isFullAmount);
-    console.log('- Customer ID:', selectedCustomer);
-
     if (!amountPaid || amountPaid <= 0) {
       return { success: false, message: 'Please enter a valid payment amount' };
     }
 
-    // Calculate actual pending from bills
     const actualPending = bills.reduce((sum, bill) => sum + (bill.pendingAmount || 0), 0);
-    console.log('📊 Calculated pending from bills:', actualPending);
 
     if (!isFullAmount && parseFloat(amountPaid) > actualPending) {
       return { success: false, message: 'Payment amount cannot exceed total pending amount' };
     }
 
     try {
-      console.log('🔄 Sending payment request to backend...');
       const requestData = {
         customerId: selectedCustomer,
         amountPaid: parseFloat(amountPaid),
         method,
         reference: reference.trim()
       };
-      console.log('📤 Request Data:', requestData);
 
       const response = await api.post('/bill/update-payment', requestData);
-      
-      console.log('✅ Backend Response:', response.data);
       
       if (response.data.success) {
         await fetchBills(selectedCustomer);
@@ -756,14 +682,9 @@ const Billing = () => {
         toast.success('Payment collected successfully!');
         return { success: true };
       } else {
-        console.log('❌ Backend returned failure:', response.data.message);
         return { success: false, message: response.data.message };
       }
     } catch (error) {
-      console.error('❌ Error collecting customer payment:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      
       const errorMessage = error.response?.data?.message || 'Error collecting payment. Please try again.';
       toast.error(errorMessage);
       
@@ -774,12 +695,10 @@ const Billing = () => {
     }
   };
 
-  // Reset bill form
   const resetBillForm = () => {
     setShowBillForm(false);
   };
 
-  // Open invoice print modal
   const handlePrintInvoice = (bill) => {
     setSelectedBillForPrint(bill);
     setSelectedCustomerForPrint(
@@ -788,7 +707,6 @@ const Billing = () => {
     setShowInvoicePrint(true);
   };
 
-  // Calculate totals FROM BILLS (not from customer object)
   const calculateTotals = () => {
     const filteredBills = bills.filter(bill => {
       const statusFilter = filterStatus === 'All' || bill.status === filterStatus;
@@ -819,12 +737,6 @@ const Billing = () => {
     const pendingAmount = filteredBills.reduce((sum, bill) => sum + (bill.pendingAmount || 0), 0);
     const pendingBillsCount = filteredBills.filter(bill => (bill.pendingAmount || 0) > 0).length;
 
-    console.log('📊 Calculated Totals:');
-    console.log('- Total Bills:', filteredBills.length);
-    console.log('- Total Amount:', totalAmount);
-    console.log('- Pending Amount:', pendingAmount);
-    console.log('- Pending Bills Count:', pendingBillsCount);
-
     return {
       billCount: filteredBills.length,
       totalAmount,
@@ -833,14 +745,12 @@ const Billing = () => {
     };
   };
 
-  // Get selected customer with proper data mapping
   const getSelectedCustomerData = () => {
     if (!selectedCustomer) return null;
     
     const customer = customers.find(c => c._id === selectedCustomer);
     if (!customer) return null;
 
-    // Map customer data to the format expected by modals
     return {
       _id: customer._id,
       name: customer.customerName,
@@ -852,7 +762,6 @@ const Billing = () => {
     };
   };
 
-  // Load initial data
   useEffect(() => {
     fetchCustomers();
     fetchVehicles();
@@ -865,7 +774,6 @@ const Billing = () => {
     <div className="space-y-6">
       <Toaster position="top-right" />
       
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Billing Management</h1>
@@ -882,7 +790,6 @@ const Billing = () => {
         </button>
       </div>
 
-      {/* Customer Select */}
       <CustomerSelect
         customers={customers}
         selectedCustomer={selectedCustomer}
@@ -896,7 +803,6 @@ const Billing = () => {
         onPrintBill={() => handlePrintCustomerBill(selectedCustomer)}
       />
 
-      {/* Bill Form */}
       {showBillForm && (
         <BillForm
           customers={customers}
@@ -907,7 +813,6 @@ const Billing = () => {
         />
       )}
 
-      {/* Bill List */}
       {selectedCustomer && (
         <BillList
           bills={bills}
@@ -920,7 +825,6 @@ const Billing = () => {
         />
       )}
 
-      {/* Customer Payment Modal - Uses calculated pending from bills */}
       {showCustomerPaymentModal && selectedCustomerData && (
         <CustomerPaymentModal
           customer={selectedCustomerData}
@@ -930,7 +834,6 @@ const Billing = () => {
         />
       )}
 
-      {/* Customer Transaction History Modal */}
       {showTransactionHistoryModal && customerTransactions && selectedCustomerData && (
         <CustomerTransactionHistoryModal
           customer={selectedCustomerData}
@@ -939,7 +842,6 @@ const Billing = () => {
         />
       )}
 
-      {/* Invoice Print Modal */}
       {showInvoicePrint && selectedBillForPrint && selectedCustomerForPrint && (
         <InvoicePrint
           bill={selectedBillForPrint}
