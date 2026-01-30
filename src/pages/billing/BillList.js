@@ -66,8 +66,7 @@ const BillList = ({
       bill.vehicleType,
       bill.routeInfo,
       bill.quantityInfo,
-      bill.status, // Add status to search
-      // Also search in individual vehicle data if available
+      bill.status,
       ...(bill.vehicles ? bill.vehicles.flatMap(v => [
         v.vehicleNumber,
         v.driverName,
@@ -77,13 +76,13 @@ const BillList = ({
         v.unit
       ]) : [])
     ].some(field => {
-      // Safe null check and string conversion
       if (field === null || field === undefined || field === '') return false;
       return field.toString().toLowerCase().includes(search);
     });
 
     return statusFilter && searchFilter;
   });
+
   const handleTransactionClick = (bill) => {
     setSelectedBillTransactions(bill);
     setShowTransactionModal(true);
@@ -91,6 +90,89 @@ const BillList = ({
 
   const getTotalPaidAmount = (transactions = []) => {
     return transactions.reduce((total, transaction) => total + (transaction.amount || 0), 0);
+  };
+
+  // Generate bill details matching the print format
+  const generateBillDetails = (bill) => {
+    let details = [];
+    
+    if (bill.vehicles && bill.vehicles.length > 0) {
+      bill.vehicles.forEach((vehicle, index) => {
+        const vehicleInfo = [];
+        if (vehicle.vehicleNumber) vehicleInfo.push(vehicle.vehicleNumber);
+        if (vehicle.vehicleType) vehicleInfo.push(vehicle.vehicleType);
+        if (vehicle.product) vehicleInfo.push(vehicle.product);
+        
+        details.push(
+          <div 
+            key={index}
+            className={`text-xs leading-tight ${index < bill.vehicles.length - 1 ? 'mb-1 pb-1 border-b border-red-200 dark:border-red-900' : ''}`}
+          >
+            <div className="font-normal text-gray-700 dark:text-gray-300">
+              {vehicleInfo.join(' - ')}
+            </div>
+          </div>
+        );
+      });
+    } else {
+      const vehicleInfo = [];
+      if (bill.vehicleNumber) vehicleInfo.push(bill.vehicleNumber);
+      if (bill.vehicleType) vehicleInfo.push(bill.vehicleType);
+      if (bill.product) vehicleInfo.push(bill.product);
+      
+      if (vehicleInfo.length > 0) {
+        details.push(
+          <div key="single" className="text-xs leading-tight">
+            <div className="font-normal text-gray-700 dark:text-gray-300">
+              {vehicleInfo.join(' - ')}
+            </div>
+          </div>
+        );
+      }
+    }
+    
+    // Add extra charges if present
+    if (bill.extraCharges && bill.extraCharges.length > 0) {
+      details.push(
+        <div key="extra-charges" className="mt-1 pt-1 border-t border-red-300 dark:border-red-800">
+          <div className="text-xs font-semibold text-red-600 dark:text-red-500 mb-0.5">
+            अतिरिक्त शुल्क:
+          </div>
+          {bill.extraCharges.map((charge, idx) => (
+            <div key={idx} className="flex justify-between text-xs mb-0.5">
+              <span className="text-gray-600 dark:text-gray-400">{charge.description}</span>
+              <span className="font-semibold text-red-600 dark:text-red-500">
+                ₹{charge.amount.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    
+    return details;
+  };
+
+  // Get bill quantity (matching print format)
+  const getBillQuantity = (bill) => {
+    if (bill.vehicles && bill.vehicles.length > 0) {
+      return bill.vehicles.reduce((sum, vehicle) => sum + (vehicle.quantity || 0), 0);
+    }
+    return bill.quantity || 0;
+  };
+
+  // Get bill rate (matching print format)
+  const getBillRate = (bill) => {
+    if (bill.vehicles && bill.vehicles.length > 0) {
+      const totalAmount = bill.vehicles.reduce((sum, vehicle) => 
+        sum + ((vehicle.quantity || 0) * (vehicle.rate || 0)), 0
+      );
+      const totalQuantity = bill.vehicles.reduce((sum, vehicle) => 
+        sum + (vehicle.quantity || 0), 0
+      );
+      return totalQuantity > 0 ? totalAmount / totalQuantity : 0;
+    }
+    return bill.rate || 0;
   };
 
   // Transaction Modal Component
@@ -318,88 +400,141 @@ const BillList = ({
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full border-collapse">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Bill No.</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Vehicle(s)</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Driver(s)</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Route/Unit</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Quantity</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                  <th className="text-left py-4 px-4 font-semibold text-gray-700 dark:text-gray-300">Actions</th>
+                <tr className="bg-gradient-to-b from-red-50 to-red-100 dark:from-red-950 dark:to-red-900 border-b-2 border-red-600 dark:border-red-700">
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '4%'}}>
+                    अ.क्र.<br/><span className="text-[10px] font-normal">Sr. No.</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '12%'}}>
+                    बिल क्रमांक<br/><span className="text-[10px] font-normal">Bill No.</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '8%'}}>
+                    दिनांक<br/><span className="text-[10px] font-normal">Date</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '20%'}}>
+                    तपशील<br/><span className="text-[10px] font-normal">Details</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '8%'}}>
+                    संख्या<br/><span className="text-[10px] font-normal">Quantity</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '10%'}}>
+                    दर<br/><span className="text-[10px] font-normal">Rate</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '12%'}}>
+                    एकूण रक्कम<br/><span className="text-[10px] font-normal">Total Amount</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '12%'}}>
+                    वसूल रक्कम<br/><span className="text-[10px] font-normal">Paid Amount</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800" style={{width: '14%'}}>
+                    बाकी रक्कम<br/><span className="text-[10px] font-normal">Pending Amount</span>
+                  </th>
+                  <th className="text-center py-3 px-2 font-semibold text-gray-800 dark:text-gray-200 text-xs border-l border-red-200 dark:border-red-800">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredBills.map((bill) => {
+                {filteredBills.map((bill, index) => {
                   const transactionCount = bill.transactions ? bill.transactions.length : 0;
                   const totalPaid = getTotalPaidAmount(bill.transactions);
+                  const quantity = getBillQuantity(bill);
+                  const rate = getBillRate(bill);
                   
                   return (
-                    <tr key={bill._id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-gray-900 dark:text-white">
+                    <tr 
+                      key={bill._id} 
+                      className="border-b border-red-100 dark:border-red-900 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    >
+                      {/* Sr. No. */}
+                      <td className="py-3 px-2 text-center text-sm text-gray-700 dark:text-gray-300 border-l border-red-100 dark:border-red-900">
+                        {index + 1}
+                      </td>
+
+                      {/* Bill No. */}
+                      <td className="py-3 px-2 text-left border-l border-red-100 dark:border-red-900">
+                        <div className="font-bold text-sm text-gray-900 dark:text-white">
                           {bill.billNo}
                         </div>
                         {bill.vehicleCount > 1 && (
-                          <div className="text-xs text-blue-600 dark:text-blue-400">
+                          <div className="text-[10px] text-blue-600 dark:text-blue-400 mt-0.5">
                             {bill.vehicleCount} vehicles
                           </div>
                         )}
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="text-gray-600 dark:text-gray-400">
-                          <div className="font-medium text-sm max-w-40 truncate" title={bill.vehicleNumber}>
-                            {bill.vehicleNumber || 'N/A'}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-500">
-                            {bill.vehicleType || 'N/A'}
-                          </div>
+
+                      {/* Date */}
+                      <td className="py-3 px-2 text-center text-sm text-gray-700 dark:text-gray-300 border-l border-red-100 dark:border-red-900">
+                        {bill.date ? new Date(bill.date).toLocaleDateString('en-IN', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        }) : '—'}
+                      </td>
+
+                      {/* Details */}
+                      <td className="py-3 px-2 text-left border-l border-red-100 dark:border-red-900">
+                        <div className="max-w-xs">
+                          {generateBillDetails(bill)}
                         </div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="text-gray-600 dark:text-gray-400 text-sm max-w-32 truncate" title={bill.driverName}>
-                          {bill.driverName || 'N/A'}
+
+                      {/* Quantity */}
+                      <td className="py-3 px-2 text-center text-sm font-medium text-gray-900 dark:text-white border-l border-red-100 dark:border-red-900">
+                        {quantity.toFixed(0)}
+                      </td>
+
+                      {/* Rate */}
+                      <td className="py-3 px-2 text-right text-sm font-bold text-gray-900 dark:text-white border-l border-red-100 dark:border-red-900">
+                        {rate.toFixed(2)}
+                      </td>
+
+                      {/* Total Amount */}
+                      <td className="py-3 px-2 text-right border-l border-red-100 dark:border-red-900">
+                        <div className="text-sm font-bold text-gray-900 dark:text-white">
+                          {(bill.netAmount || 0).toFixed(2)}
                         </div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="text-gray-600 dark:text-gray-400 text-sm max-w-40 truncate" title={bill.routeInfo}>
-                          {bill.routeInfo || 'N/A'}
+
+                      {/* Paid Amount */}
+                      <td className="py-3 px-2 text-right text-sm font-bold text-green-600 dark:text-green-500 border-l border-red-100 dark:border-red-900">
+                        {totalPaid.toFixed(2)}
+                      </td>
+
+                      {/* Pending Amount */}
+                      <td className="py-3 px-2 text-right border-l border-red-100 dark:border-red-900">
+                        <div className="text-sm font-bold text-red-600 dark:text-red-500">
+                          {(bill.pendingAmount || 0).toFixed(2)}
                         </div>
                       </td>
-                      <td className="py-4 px-4">
-                        <div className="text-gray-600 dark:text-gray-400 text-sm max-w-32 truncate" title={bill.quantityInfo}>
-                          {bill.quantityInfo || 'N/A'}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-gray-900 dark:text-white font-medium">
-                          ₹{(bill.netAmount || 0).toLocaleString()}
-                        </div>
-                        {bill.cashDiscount > 0 && (
-                          <div className="text-sm text-gray-500">
-                            (₹{(bill.totalAmount || 0).toLocaleString()} - ₹{(bill.cashDiscount || 0).toLocaleString()})
-                          </div>
-                        )}
-                      </td>
-                      
-                      <td className="py-4 px-4 text-gray-600 dark:text-gray-400 text-sm">
-                        {bill.date ? new Date(bill.date).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex gap-2">
-                          
+
+                      {/* Actions */}
+                      <td className="py-3 px-2 border-l border-red-100 dark:border-red-900">
+                        <div className="flex gap-1.5 justify-center">
                           <button
                             onClick={() => onShowClick(bill)}
-                            className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 transition-colors"
+                            className="px-2.5 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-1 transition-colors"
+                            title="View Bill"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            Show
                           </button>
+
+                          {transactionCount > 0 && (
+                            <button
+                              onClick={() => handleTransactionClick(bill)}
+                              className="px-2.5 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700 flex items-center gap-1 transition-colors"
+                              title={`${transactionCount} payment${transactionCount !== 1 ? 's' : ''}`}
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                              </svg>
+                              <span className="text-[10px]">{transactionCount}</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
