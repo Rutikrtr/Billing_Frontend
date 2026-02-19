@@ -1,9 +1,14 @@
 // src/pages/billing/components/BillingReportDownload.js
 import React from 'react';
 import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import { getLogoUrl } from '../../../utils/logoUtils';
 
 const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
   const { user } = useSelector((state) => state.auth);
+
+  // Check if running in Electron
+  const isElectron = window.electronAPI?.isElectron;
 
   // Format date for display (DD/MM/YYYY format)
   const formatDate = (date) => {
@@ -141,14 +146,6 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
     }
     return bill.rate || 0;
   };
-
-  // 🎯 Centralized logo location
-  const getLogoUrl = (logoType = 'primary') => {
-    return logoType === 'secondary'
-      ? `${window.location.origin}/logo1.png`
-      : `${window.location.origin}/logo2.png`;
-  };
-
 
   // Generate PDF-ready HTML content
   const generateCustomerPDFContent = (customer) => {
@@ -612,26 +609,55 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
       </html>`;
   };
 
-  // Download PDF for a specific customer
-  const downloadCustomerPDF = (customer) => {
+  // ✅ Download PDF for Electron or Browser
+  const downloadCustomerPDF = async (customer) => {
     const htmlContent = generateCustomerPDFContent(customer);
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
     const customerName = (customer.customerName || customer.name || 'Unknown_Customer')
       .replace(/[^a-zA-Z0-9]/g, '_');
     const firmName = (user?.firmName || 'Report').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `${firmName}_PendingBills_${customerName}_${new Date().toISOString().split('T')[0]}`;
     
-    const newWindow = window.open(url, '_blank');
-    if (newWindow) {
-      newWindow.document.title = fileName;
-      newWindow.onload = () => {
-        setTimeout(() => {
-          newWindow.print();
-          URL.revokeObjectURL(url);
-        }, 500);
-      };
+    if (isElectron) {
+      // ✅ Electron: Save HTML file and show notification
+      try {
+        const result = await window.electronAPI.savePdfHtml({
+          filename: `${fileName}.html`,
+          htmlContent: htmlContent,
+          customerName: customerName
+        });
+
+        if (result.success) {
+          toast.success(`Bill saved: ${result.filename}`, {
+            duration: 4000,
+            icon: '✅'
+          });
+
+          // Optional: Show file in folder
+          setTimeout(() => {
+            window.electronAPI.showFileInFolder(result.path);
+          }, 500);
+        } else {
+          toast.error(`Failed to save: ${result.error}`);
+        }
+      } catch (error) {
+        console.error('Error saving PDF:', error);
+        toast.error('Error saving PDF file');
+      }
+    } else {
+      // ✅ Browser: Open print dialog
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      const newWindow = window.open(url, '_blank');
+      if (newWindow) {
+        newWindow.document.title = fileName;
+        newWindow.onload = () => {
+          setTimeout(() => {
+            newWindow.print();
+            URL.revokeObjectURL(url);
+          }, 500);
+        };
+      }
     }
   };
 

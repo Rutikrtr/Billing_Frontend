@@ -8,6 +8,7 @@ import InvoicePrint from './invoice/InvoicePrint';
 import CustomerPaymentModal from './CustomerPaymentModal';
 import CustomerTransactionHistoryModal from './CustomerTransactionHistoryModal';
 import { Toaster, toast } from 'react-hot-toast';
+import { getLogoUrl } from '../../utils/logoUtils';
 
 const Billing = () => {
   const { user } = useSelector((state) => state.auth);
@@ -87,13 +88,6 @@ const Billing = () => {
     }
   };
 
-  // 🎯 Centralized logo location - SINGLE SOURCE OF TRUTH
-   const getLogoUrl = (logoType = 'primary') => {
-    return logoType === 'secondary'
-      ? `${window.location.origin}/logo1.png`
-      : `${window.location.origin}/logo2.png`;
-  };
-
   const handlePrintCustomerBill = (customerId) => {
     if (!customerId) {
       toast.error('Please select a customer first');
@@ -121,7 +115,7 @@ const Billing = () => {
     generateAndPrintCustomerBill(customerWithBills);
   };
 
-  const generateAndPrintCustomerBill = (customer) => {
+  const generateAndPrintCustomerBill = async (customer) => {
     const formatDate = (date) => {
       return new Date(date).toLocaleDateString('en-IN', {
         day: '2-digit',
@@ -267,7 +261,6 @@ const Billing = () => {
             flex-direction: column;
           }
 
-          /* Header Section - RED THEME */
           .header {
             border: 3px solid #dc2626;
             padding: 8px 10px;
@@ -283,14 +276,14 @@ const Billing = () => {
           }
 
           .logo {
-            width: 150px;    
-            height: auto;
-            border: none;    
-            outline: none;   
-            box-shadow: none;
+            width: 70px;    
+            height: 70px;
+            border: 2px solid #dc2626;
+            border-radius: 4px;
+            padding: 2px;
+            background: #fff;
             object-fit: contain;
           }
-
 
           .header-left {
             display: flex;
@@ -346,7 +339,6 @@ const Billing = () => {
             color: #dc2626;
           }
 
-          /* Customer Info - RED THEME */
           .customer-info { 
             border-left: 3px solid #dc2626;
             border-right: 3px solid #dc2626;
@@ -367,7 +359,6 @@ const Billing = () => {
           .ci-label { font-size: 7.5pt; color: #991b1b; font-weight: 600; }
           .ci-value { font-size: 9.5pt; font-weight: bold; margin-top: 3px; color: #1f2937; }
 
-          /* Items Table - RED THEME */
           .table-wrapper {
             flex: 1;
             display: flex;
@@ -425,7 +416,6 @@ const Billing = () => {
             color: transparent;
           }
 
-          /* Amount in Words - RED THEME */
           .amount-words {
             padding: 10px 12px;
             font-size: 9.5pt;
@@ -438,7 +428,6 @@ const Billing = () => {
           .amount-words-label { font-weight: bold; color: #991b1b; }
           .amount-words-value { margin-left: 10px; text-transform: uppercase; font-weight: bold; color: #dc2626; }
 
-          /* Summary Section - RED THEME */
           .summary-section { 
             padding: 10px 0;
             border-left: 3px solid #dc2626;
@@ -476,7 +465,6 @@ const Billing = () => {
             color: #dc2626;
           }
 
-          /* Signature Section - RED THEME */
           .signature-section {
             margin-top: 20px;
             padding: 0 12px;
@@ -499,7 +487,6 @@ const Billing = () => {
             font-size: 10.5pt;
           }
 
-          /* Footer - RED THEME */
           .footer { 
             margin-top: auto;
             padding-top: 12px;
@@ -525,15 +512,12 @@ const Billing = () => {
       </head>
       <body>
         <div class="bill-container">
-          <!-- Header with Two Logos -->
           <div class="header">
             <div class="header-grid">
-              <!-- Left Logo -->
               <div class="header-left">
                 <img src="${getLogoUrl('primary')}" class="logo" alt="Logo" />
               </div>
 
-              <!-- Center Content -->
               <div class="header-center">
                 <div class="marathi-title">॥ जय मातादी प्रसन्न ॥</div>
                 <div class="firm-name">${user?.firmName || 'LAKSHMI SUPPLIERS'}</div>
@@ -545,14 +529,12 @@ const Billing = () => {
                 </div>
               </div>
 
-              <!-- Right Logo -->
               <div class="header-right-logo">
                 <img src="${getLogoUrl('secondary')}" class="logo" alt="Logo" />
               </div>
             </div>
           </div>
 
-          <!-- Customer Info -->
           <div class="customer-info">
             <div class="ci-row">
               <div class="ci-cell">
@@ -582,7 +564,6 @@ const Billing = () => {
             </div>
           </div>
 
-          <!-- Items Table - Pending Bills -->
           <div class="table-wrapper">
             <table class="items-table">
               <thead>
@@ -648,13 +629,11 @@ const Billing = () => {
             </table>
           </div>
 
-          <!-- Amount in Words -->
           <div class="amount-words">
             <span class="amount-words-label">निव्वळ देय रक्कम अक्षरशः :</span>
             <span class="amount-words-value">${numberToWords(netPayable)}</span>
           </div>
 
-          <!-- Summary Section -->
           <div class="summary-section">
             <div class="summary-row">
               <div class="summary-label">एकूण बिल रक्कम / Total Bill Amount</div>
@@ -670,37 +649,67 @@ const Billing = () => {
             </div>
           </div>
 
-          <!-- Signature Section -->
           <div class="signature-section">
             <div class="signature-line">ग्राहकाची सही / Customer Signature</div>
             <div class="signature-name">${user?.firmName || 'लक्ष्मी सप्लायर्स'}</div>
           </div>
 
-          <!-- Footer -->
           <div class="footer">This is a computer generated bill • Pending Bills Report • Page 1 of 1</div>
         </div>
       </body>
       </html>`;
 
-    const blob = new Blob([htmlContent], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    
     const customerNameClean = (customer.customerName || customer.name || 'Unknown_Customer')
       .replace(/[^a-zA-Z0-9]/g, '_');
     const firmName = (user?.firmName || 'Report').replace(/[^a-zA-Z0-9]/g, '_');
     const fileName = `${firmName}_PendingBills_${customerNameClean}_${new Date().toISOString().split('T')[0]}`;
-    
-    const newWindow = window.open(url, '_blank');
-    if (newWindow) {
-      newWindow.document.title = fileName;
-      newWindow.onload = () => {
-        setTimeout(() => {
-          newWindow.print();
-          URL.revokeObjectURL(url);
-        }, 500);
-      };
+
+    // Check if running in Electron
+    const isElectron = window.electronAPI?.isElectron;
+
+    if (isElectron) {
+      // ✅ Electron: Save HTML file
+      try {
+        const result = await window.electronAPI.savePdfHtml({
+          filename: `${fileName}.html`,
+          htmlContent: htmlContent,
+          customerName: customerNameClean
+        });
+
+        if (result.success) {
+          toast.success(`Bill saved: ${result.filename}`, {
+            duration: 4000,
+            icon: '✅'
+          });
+
+          // Show file in folder after 500ms
+          setTimeout(() => {
+            window.electronAPI.showFileInFolder(result.path);
+          }, 500);
+        } else {
+          toast.error(`Failed to save: ${result.error}`);
+        }
+      } catch (error) {
+        console.error('Error saving PDF:', error);
+        toast.error('Error saving PDF file');
+      }
     } else {
-      toast.error('Please allow popups to print the bill');
+      // ✅ Browser: Open print dialog (existing code)
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      
+      const newWindow = window.open(url, '_blank');
+      if (newWindow) {
+        newWindow.document.title = fileName;
+        newWindow.onload = () => {
+          setTimeout(() => {
+            newWindow.print();
+            URL.revokeObjectURL(url);
+          }, 500);
+        };
+      } else {
+        toast.error('Please allow popups to print the bill');
+      }
     }
   };
   
