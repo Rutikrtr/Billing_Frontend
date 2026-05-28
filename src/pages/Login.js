@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Truck, Eye, EyeOff } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { loginSuccess } from '../features/auth/authSlice';
 import { loginRestaurant } from '../features/auth/authApi';
-import image from '../icons/preview-login.png';
+import { Eye, EyeOff, ArrowRight, FileText, Fuel, MapPin, Receipt } from 'lucide-react';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -13,7 +12,6 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
     const dispatch = useDispatch();
 
     const { user } = useSelector((state) => state.auth);
@@ -38,118 +36,233 @@ const Login = () => {
             setLoading(false);
         }
     };
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-stone-50 to-neutral-100 flex items-center justify-center p-4">
-            <Toaster position="top-center" />
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden max-w-6xl w-full relative">
-                <div className="flex flex-col lg:flex-row min-h-[600px]">
-                    {/* Left Panel - Login Form */}
-                    <div className="lg:flex-1 p-8 lg:p-12 flex items-center justify-center bg-[#bfd0e2] relative">
-                        <div className="w-full max-w-sm bg-white p-8 rounded-xl shadow-lg">
-                            <div className="text-center mb-8">
-                                <div className="flex items-center justify-center mb-6">
-                                    <div className="bg-[#224f7E] p-3 rounded-xl mr-3 shadow-lg">
-                                        <Truck className="h-6 w-6 text-white" />
-                                    </div>
-                                    <h1 className="text-3xl font-bold text-[#224f7E]">
-                                        BillMaster
-                                    </h1>
-                                </div>
-                                <div className="space-y-2 mb-6">
-                                    <h2 className="text-2xl font-bold text-gray-900">Welcome back!</h2>
-                                    <p className="text-gray-500 text-sm leading-relaxed">
-                                        Login to access your billing management system
-                                    </p>
-                                </div>
-                            </div>
 
-                            <form onSubmit={handleLogin} className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Username
-                                    </label>
+    const features = [
+        { icon: <FileText size={15} />, text: "Per-machine hourly billing & invoicing" },
+        { icon: <Fuel size={15} />, text: "Fuel consumption & maintenance logs" },
+        { icon: <MapPin size={15} />, text: "Site-wise job tracking & reports" },
+        { icon: <Receipt size={15} />, text: "Automated client billing & GST reports" },
+    ];
+
+
+    return (
+        <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-orange-50 via-white to-amber-50">
+            {/* Decorative blobs */}
+            <div className="absolute top-[-80px] left-[-80px] w-72 h-72 rounded-full bg-[#f5a800]/10 blur-3xl pointer-events-none" />
+            <div className="absolute bottom-[-60px] right-[-60px] w-80 h-80 rounded-full bg-[#f5a800]/10 blur-3xl pointer-events-none" />
+            <div className="absolute top-1/2 left-1/3 w-48 h-48 rounded-full bg-orange-100/40 blur-2xl pointer-events-none" />
+            {/* Subtle dot grid */}
+            <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: 'radial-gradient(circle, #f5a80022 1px, transparent 1px)',
+                backgroundSize: '28px 28px'
+            }} />
+            <Toaster position="top-center" />
+            <div className="rounded-3xl overflow-hidden max-w-5xl w-full flex flex-col lg:flex-row relative z-10 shadow-2xl">
+
+                {/* ── Left Panel — JCB Yellow ── */}
+                <div className="lg:w-[420px] flex-shrink-0 bg-[#f5a800] flex flex-col justify-between p-7 relative overflow-hidden">
+                    {/* bg circles */}
+                    <div className="absolute w-72 h-72 rounded-full bg-black/5 -top-20 -right-20 pointer-events-none" />
+                    <div className="absolute w-48 h-48 rounded-full bg-black/5 -bottom-14 -left-10 pointer-events-none" />
+
+                    {/* Brand */}
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <div className="w-11 h-11 bg-[#1a1a1a] rounded-xl flex items-center justify-center flex-shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f5a800" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 17h1m16 0h1M5 17V9l4-4h6l2 2v10M9 5v4H5"/>
+                                    <circle cx="7.5" cy="17.5" r="1.5"/><circle cx="16.5" cy="17.5" r="1.5"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h1 className="text-2xl font-semibold text-[#1a1a1a]">BillMaster <span className="text-orange-500 text-lg">2.0</span></h1>
+                                <p className="text-xs text-black/45 mt-0.5 tracking-wide">JCB Earthmovers — Operations</p>
+                            </div>
+                        </div>
+
+                        {/* Status badge */}
+                        <div className="mt-5 inline-flex items-center gap-2 bg-black/10 border border-black/10 rounded-full px-3 py-1.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-600 block" />
+                            <span className="text-xs text-black/60">Fleet tracking active</span>
+                        </div>
+                    </div>
+
+                    {/* Features */}
+                    <div className="flex flex-col gap-3 my-6">
+                        {features.map((f, i) => (
+                            <div key={i} className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-black/10 flex items-center justify-center flex-shrink-0 text-black/60">
+                                    {f.icon}
+                                </div>
+                                <span className="text-sm text-black/65">{f.text}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Footer dots */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex gap-1.5">
+                            <span className="w-4 h-1.5 rounded-full bg-black/50 block" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-black/20 block" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-black/20 block" />
+                        </div>
+                        <span className="text-xs text-black/30">© 2024 TechyVerve</span>
+                    </div>
+                </div>
+
+                {/* ── Right Panel — Dark Form ── */}
+                <div className="flex-1 bg-[#1a1a1a] flex flex-col justify-center px-10 py-7 relative overflow-hidden">
+                    {/* Right side — crosshair decoration */}
+                    <div className="absolute right-0 top-0 bottom-0 w-36" style={{ maskImage: 'linear-gradient(to left, rgba(0,0,0,0.6) 20%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to left, rgba(0,0,0,0.6) 20%, transparent 100%), linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)', maskComposite: 'intersect', WebkitMaskComposite: 'destination-in' }}>
+                        <svg width="144" height="100%" viewBox="0 0 144 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+
+                            {/* ── Crosshair 1 — tilted ~15° — amber, top ── */}
+                            <g transform="translate(55, 105) rotate(15)">
+                                <line x1="0" y1="-48" x2="0" y2="48" stroke="#f5a800" strokeOpacity="0.35" strokeWidth="0.75"/>
+                                <line x1="-48" y1="0" x2="48" y2="0" stroke="#f5a800" strokeOpacity="0.35" strokeWidth="0.75"/>
+                                <rect x="-5" y="-5" width="10" height="10" fill="#1a1a1a"/>
+                                <circle cx="0" cy="0" r="3" fill="none" stroke="#f5a800" strokeOpacity="0.7" strokeWidth="1"/>
+                                <circle cx="0" cy="0" r="7" fill="none" stroke="#f5a800" strokeOpacity="0.2" strokeWidth="0.75"/>
+                                <circle cx="0" cy="0" r="1.2" fill="#f5a800" fillOpacity="0.9"/>
+                                <line x1="-9" y1="0" x2="-6" y2="0" stroke="#f5a800" strokeOpacity="0.5" strokeWidth="0.75"/>
+                                <line x1="6" y1="0" x2="9" y2="0" stroke="#f5a800" strokeOpacity="0.5" strokeWidth="0.75"/>
+                                <line x1="0" y1="-9" x2="0" y2="-6" stroke="#f5a800" strokeOpacity="0.5" strokeWidth="0.75"/>
+                                <line x1="0" y1="6" x2="0" y2="9" stroke="#f5a800" strokeOpacity="0.5" strokeWidth="0.75"/>
+                            </g>
+
+                            {/* ── Crosshair 2 — tilted ~-20° — white, middle ── */}
+                            <g transform="translate(88, 230) rotate(-20)">
+                                <line x1="0" y1="-40" x2="0" y2="40" stroke="white" strokeOpacity="0.15" strokeWidth="0.75"/>
+                                <line x1="-40" y1="0" x2="40" y2="0" stroke="white" strokeOpacity="0.15" strokeWidth="0.75"/>
+                                <rect x="-4" y="-4" width="8" height="8" fill="#1a1a1a"/>
+                                <circle cx="0" cy="0" r="2.5" fill="none" stroke="white" strokeOpacity="0.3" strokeWidth="0.75"/>
+                                <circle cx="0" cy="0" r="6" fill="none" stroke="white" strokeOpacity="0.08" strokeWidth="0.75"/>
+                                <circle cx="0" cy="0" r="1" fill="white" fillOpacity="0.35"/>
+                                <line x1="-7" y1="0" x2="-5" y2="0" stroke="white" strokeOpacity="0.2" strokeWidth="0.75"/>
+                                <line x1="5" y1="0" x2="7" y2="0" stroke="white" strokeOpacity="0.2" strokeWidth="0.75"/>
+                                <line x1="0" y1="-7" x2="0" y2="-5" stroke="white" strokeOpacity="0.2" strokeWidth="0.75"/>
+                                <line x1="0" y1="5" x2="0" y2="7" stroke="white" strokeOpacity="0.2" strokeWidth="0.75"/>
+                            </g>
+
+                            {/* ── Crosshair 3 — tilted ~10° — white faint, bottom ── */}
+                            <g transform="translate(40, 345) rotate(10)">
+                                <line x1="0" y1="-28" x2="0" y2="28" stroke="white" strokeOpacity="0.07" strokeWidth="0.75"/>
+                                <line x1="-28" y1="0" x2="28" y2="0" stroke="white" strokeOpacity="0.07" strokeWidth="0.75"/>
+                                <rect x="-3" y="-3" width="6" height="6" fill="#1a1a1a"/>
+                                <circle cx="0" cy="0" r="2" fill="none" stroke="white" strokeOpacity="0.12" strokeWidth="0.75"/>
+                                <circle cx="0" cy="0" r="0.8" fill="white" fillOpacity="0.15"/>
+                            </g>
+
+                        </svg>
+                    </div>
+
+                    <div className="max-w-xs w-full mx-auto lg:mx-0">
+
+                        {/* Heading */}
+                        <div className="mb-5">
+                            <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-4">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#f5a800] block animate-pulse" />
+                                <span className="text-[11px] font-medium text-white/40 uppercase tracking-widest">Operator / Manager</span>
+                            </div>
+                            <h2 className="text-3xl font-bold text-white leading-tight mb-2">
+                                Move earth.
+                            </h2>
+                            <h2 className="text-3xl font-bold leading-tight mb-3">
+                                <span className="text-[#f5a800]">Move business.</span>
+                            </h2>
+                            <p className="text-sm text-white/30">Sign in to your operations dashboard</p>
+                        </div>
+
+                        {/* Form */}
+                        <form onSubmit={handleLogin} className="space-y-3">
+                            {/* Username */}
+                            <div>
+                                <label className="block text-xs font-medium text-white/40 uppercase tracking-widest mb-1.5">
+                                    Username
+                                </label>
+                                <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-xl px-4 h-12 focus-within:border-[#f5a800]/50 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-white/25 flex-shrink-0">
+                                        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                                    </svg>
                                     <input
                                         type="text"
                                         value={username}
                                         onChange={(e) => setUsername(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#224f7E] focus:border-transparent transition-all duration-200 hover:border-gray-300"
                                         placeholder="Enter your username"
                                         required
+                                        className="flex-1 bg-transparent text-sm text-white placeholder-white/25 outline-none"
                                     />
                                 </div>
+                            </div>
 
-                                <div>
-                                    <div className="flex items-center justify-between mb-2">
-                                        <label className="block text-sm font-medium text-gray-700">
-                                            Password
-                                        </label>
-                                    </div>
-                                    <div className="relative">
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#224f7E] focus:border-transparent transition-all duration-200 pr-12 hover:border-gray-300"
-                                            placeholder="Enter your password"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                                        >
-                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                                        </button>
-                                    </div>
+                            {/* Password */}
+                            <div>
+                                <label className="block text-xs font-medium text-white/40 uppercase tracking-widest mb-1.5">
+                                    Password
+                                </label>
+                                <div className="flex items-center gap-2.5 bg-white/5 border border-white/10 rounded-xl px-4 h-12 focus-within:border-[#f5a800]/50 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-white/25 flex-shrink-0">
+                                        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                    <input
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="••••••••"
+                                        required
+                                        className="flex-1 bg-transparent text-sm text-white placeholder-white/25 outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="text-white/25 hover:text-white/50 transition-colors"
+                                    >
+                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                    </button>
                                 </div>
+                            </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full bg-[#224f7E] hover:bg-[#1a3d63] text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                                >
-                                    {loading ? (
-                                        <>
-                                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2"></div>
-                                            Logging in...
-                                        </>
-                                    ) : (
-                                        'Login'
-                                    )}
-                                </button>
-                            </form>
+                            {/* Submit */}
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="w-full h-12 bg-[#f5a800] hover:bg-[#e09900] rounded-xl flex items-center justify-center gap-2 mt-2 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group overflow-hidden relative"
+                            >
+                                {loading ? (
+                                    <>
+                                        <div className="w-5 h-5 rounded-full border-2 border-black/30 border-t-black animate-spin" />
+                                        <span className="text-sm font-medium text-[#1a1a1a]">Signing in...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="text-sm font-medium text-[#1a1a1a] relative z-10">
+                                            Sign in to BillMaster
+                                        </span>
+                                        <ArrowRight
+                                            size={17}
+                                            className="text-black/60 relative z-10 transition-all duration-500 ease-in-out group-hover:translate-x-[90px]"
+                                        />
+                                    </>
+                                )}
+                            </button>
+                        </form>
 
-                            <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                                <p className="text-xs text-gray-400">
-                                    © 2024 BillMaster Billing Management System. All rights reserved.
-                                </p>
-                                <p className="text-xs text-gray-500 font-medium mt-1">
-                                    Created by <span className="text-[#224f7E]">RS</span>
-                                </p>
+                        {/* Decorative bars */}
+                        <div className="mt-6 pt-5 border-t border-white/10">
+                            <div className="flex items-end gap-1 h-14">
+                                {[30, 50, 40, 70, 45, 85, 55, 65, 40, 75, 50, 90, 60, 45, 80, 35, 65, 55, 70, 42].map((h, i) => (
+                                    <div
+                                        key={i}
+                                        className={`flex-1 rounded-sm ${[5, 11, 18].includes(i) ? 'bg-[#f5a800]/80' : 'bg-white/10'}`}
+                                        style={{ height: `${h}%` }}
+                                    />
+                                ))}
                             </div>
                         </div>
-                    </div>
-                    {/* Right Panel - Full Screen Image */}
-                    <div className="lh-screen lg:flex-1 bg-gradient-to-br from-stone-50 via-neutral-50 to-stone-100 flex items-center justify-center relative overflow-hidden">
-                        {/* Full Screen Image */}
-                        <div className="absolute inset-0 w-full h-full z-0">
-                            <img
-                                src={image}
-                                alt="Monstera Leaves"
-                                className="w-full h-full object-cover object-center"
-                            />
-                        </div>
 
-                        {/* Subtle overlay gradient */}
-                        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/5 to-black/10 pointer-events-none"></div>
-
-                        {/* Decorative elements */}
-                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                            <div className="absolute top-20 left-20 w-2 h-2 bg-green-300 rounded-full opacity-30 animate-pulse"></div>
-                            <div className="absolute bottom-32 right-20 w-1 h-1 bg-emerald-400 rounded-full opacity-40 animate-pulse delay-1000"></div>
-                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
     );
