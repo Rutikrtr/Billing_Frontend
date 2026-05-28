@@ -6,6 +6,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
   const [expandedCustomers, setExpandedCustomers] = useState(new Set());
   const [selectedBills, setSelectedBills] = useState(new Set());
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
+  const [gstEnabled, setGstEnabled] = useState(false);
   const { user } = useSelector((state) => state.auth);
 
   // Toggle customer expansion
@@ -277,11 +278,32 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
       const pending = bill.pendingAmount || 0;
       return sum + (netAmount - pending);
     }, 0);
-    const netPayable = selectedBillsList.reduce((sum, bill) => sum + (bill.pendingAmount || 0), 0);
+    const baseNetPayable = selectedBillsList.reduce((sum, bill) => sum + (bill.pendingAmount || 0), 0);
+
+    // GST calculations
+    const cgstAmount = gstEnabled ? baseNetPayable * 0.09 : 0;
+    const sgstAmount = gstEnabled ? baseNetPayable * 0.09 : 0;
+    const netPayable = baseNetPayable + cgstAmount + sgstAmount;
 
     // Calculate minimum rows to fill the page
     const minRows = 10;
     const emptyRowsNeeded = Math.max(0, minRows - selectedBillsList.length);
+
+    // GST summary rows for PDF
+    const gstSummaryRows = gstEnabled ? `
+      <div class="summary-row">
+        <div class="summary-label">बाकी रक्कम (Base Pending Amount)</div>
+        <div class="summary-value">${formatCurrency(baseNetPayable)}</div>
+      </div>
+      <div class="summary-row gst-row">
+        <div class="summary-label">CGST @ 9%</div>
+        <div class="summary-value" style="color: #7c3aed;">${formatCurrency(cgstAmount)}</div>
+      </div>
+      <div class="summary-row gst-row">
+        <div class="summary-label">SGST @ 9%</div>
+        <div class="summary-value" style="color: #7c3aed;">${formatCurrency(sgstAmount)}</div>
+      </div>
+    ` : '';
 
     return `
       <!DOCTYPE html>
@@ -398,6 +420,19 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
             color: #dc2626;
           }
 
+          /* GST Badge in header */
+          .gst-badge {
+            display: inline-block;
+            margin-top: 4px;
+            padding: 2px 8px;
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+            font-size: 7.5pt;
+            font-weight: 700;
+            border-radius: 3px;
+            letter-spacing: 0.5px;
+          }
+
           /* Customer Info - RED THEME */
           .customer-info { 
             border-left: 3px solid #dc2626;
@@ -512,6 +547,14 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           .summary-row:last-child { border-bottom: none; }
           .summary-label { flex: 1; color: #991b1b; font-weight: 500; }
           .summary-value { min-width: 130px; text-align: right; font-weight: bold; color: #1f2937; }
+
+          /* GST rows in summary */
+          .summary-row.gst-row {
+            background: #f5f3ff;
+          }
+          .summary-row.gst-row .summary-label {
+            color: #5b21b6;
+          }
 
           .summary-row.net {
             margin-top: 6px;
@@ -698,7 +741,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           <!-- Amount in Words -->
           <div class="amount-words">
             <span class="amount-words-label">निव्वळ देय रक्कम अक्षरशः :</span>
-            <span class="amount-words-value">${numberToWords(netPayable)}</span>
+            <span class="amount-words-value">${numberToWords(Math.round(netPayable))}</span>
           </div>
 
           <!-- Summary Section -->
@@ -711,8 +754,9 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
               <div class="summary-label">वसूल केलेली रक्कम / Amount Paid</div>
               <div class="summary-value" style="color: #16a34a;">${formatCurrency(paidAmount)}</div>
             </div>
+            ${gstSummaryRows}
             <div class="summary-row net">
-              <div class="summary-label">निव्वळ देय रक्कम / Net Payable Amount</div>
+              <div class="summary-label">निव्वळ देय रक्कम / Net Pay${gstEnabled ? ' (GST Inclusive)' : ''}</div>
               <div class="summary-value" style="color: #dc2626;">${formatCurrency(netPayable)}</div>
             </div>
           </div>
@@ -724,7 +768,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           </div>
 
           <!-- Footer -->
-          <div class="footer">This is a computer generated bill • Selected Bills Report • Page 1 of 1</div>
+          <div class="footer">This is a computer generated bill • Selected Bills Report • Page 1 of 1${gstEnabled ? ' • GST @ 18% Applied' : ''}</div>
         </div>
       </body>
       </html>`;
@@ -845,30 +889,74 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
             )}
           </div>
 
-          {/* PDF Generation Controls */}
-          {selectedBills.size > 0 && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                {selectedBills.size} bill{selectedBills.size !== 1 ? 's' : ''} selected
+          {/* Right side controls */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+
+            {/* GST Toggle Checkbox */}
+            <label className="flex items-center gap-2 cursor-pointer select-none px-3 py-2 rounded-lg border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
+              <input
+                type="checkbox"
+                checked={gstEnabled}
+                onChange={(e) => setGstEnabled(e.target.checked)}
+                className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 dark:focus:ring-purple-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600 cursor-pointer"
+              />
+              <span className="text-sm font-medium text-purple-700 dark:text-purple-300">
+                Apply GST
               </span>
-              <button
-                onClick={clearAllSelections}
-                className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
-              >
-                Clear Selection
-              </button>
-              <button
-                onClick={generateSelectedBillsPDF}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                </svg>
-                Print Selected Bills
-              </button>
-            </div>
-          )}
+              {gstEnabled && (
+                <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/40 px-1.5 py-0.5 rounded">
+                  CGST 9% + SGST 9%
+                </span>
+              )}
+            </label>
+
+            {/* PDF Generation Controls */}
+            {selectedBills.size > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
+                  {selectedBills.size} bill{selectedBills.size !== 1 ? 's' : ''} selected
+                </span>
+                <button
+                  onClick={clearAllSelections}
+                  className="px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                >
+                  Clear Selection
+                </button>
+                <button
+                  onClick={generateSelectedBillsPDF}
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print Selected Bills
+                  {gstEnabled && (
+                    <span className="text-xs bg-purple-500 text-white px-1.5 py-0.5 rounded font-semibold">
+                      +GST
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* GST Info Banner — shown when GST is enabled */}
+        {gstEnabled && (
+          <div className="mt-4 flex items-start gap-3 p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg">
+            <svg className="w-5 h-5 text-purple-600 dark:text-purple-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">
+                GST will be applied on the printed bill
+              </p>
+              <p className="text-xs text-purple-600 dark:text-purple-400 mt-0.5">
+                Net Payable Amount + CGST (9%) + SGST (9%) = Total with GST (18%). This applies only to the pending/payable amount, not the already-paid amount.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
