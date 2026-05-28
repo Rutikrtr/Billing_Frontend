@@ -713,8 +713,16 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
                       <td class="details-cell">
                         ${generateBillDetails(bill)}
                       </td>
-                      <td>${quantity}</td>
-                      <td class="text-right">${rate.toFixed(2)}</td>
+                      <td style="text-align:left; padding: 6px;">
+                        ${bill.vehicles && bill.vehicles.length > 0
+                          ? bill.vehicles.map(v => `<div style="font-size:7.5pt; line-height:1.8; border-bottom:1px solid #fca5a5; padding: 1px 0;">${v.quantity ?? '-'}</div>`).join('')
+                          : quantity}
+                      </td>
+                      <td class="text-right" style="padding: 6px;">
+                        ${bill.vehicles && bill.vehicles.length > 0
+                          ? bill.vehicles.map(v => `<div style="font-size:7.5pt; line-height:1.8; border-bottom:1px solid #fca5a5; padding: 1px 0;">₹${v.rate != null ? Number(v.rate).toFixed(2) : '-'}</div>`).join('')
+                          : rate.toFixed(2)}
+                      </td>
                       <td class="text-right">${netAmount.toFixed(2)}</td>
                       <td class="text-right" style="color: #16a34a;">${paidAmt.toFixed(2)}</td>
                       <td class="text-right" style="color: #dc2626;"><strong>${pendingAmount.toFixed(2)}</strong></td>

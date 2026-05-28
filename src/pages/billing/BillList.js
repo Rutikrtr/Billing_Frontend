@@ -482,12 +482,26 @@ const BillList = ({
 
                       {/* Quantity */}
                       <td className="py-3 px-2 text-center text-sm font-medium text-gray-900 dark:text-white border-l border-red-100 dark:border-red-900">
-                        {quantity.toFixed(0)}
+                        {bill.vehicles && bill.vehicles.length > 0
+                          ? bill.vehicles.map((v, i) => (
+                              <div key={i} className={`py-0.5 ${i < bill.vehicles.length - 1 ? 'border-b border-red-100 dark:border-red-900' : ''}`}>
+                                {v.quantity ?? '-'}
+                              </div>
+                            ))
+                          : quantity.toFixed(0)
+                        }
                       </td>
 
                       {/* Rate */}
                       <td className="py-3 px-2 text-right text-sm font-bold text-gray-900 dark:text-white border-l border-red-100 dark:border-red-900">
-                        {rate.toFixed(2)}
+                        {bill.vehicles && bill.vehicles.length > 0
+                          ? bill.vehicles.map((v, i) => (
+                              <div key={i} className={`py-0.5 ${i < bill.vehicles.length - 1 ? 'border-b border-red-100 dark:border-red-900' : ''}`}>
+                                {v.rate != null ? Number(v.rate).toFixed(2) : '-'}
+                              </div>
+                            ))
+                          : rate.toFixed(2)
+                        }
                       </td>
 
                       {/* Total Amount */}
