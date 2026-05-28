@@ -1142,8 +1142,10 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
                                     }`}
                                   />
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                  {bill.billNo || '-'}
+                                <td className="px-6 py-4 whitespace-nowrap">
+                                  <span className="text-[9px] font-medium text-gray-900 dark:text-white break-all whitespace-normal max-w-[70px] block">
+                                    {bill.billNo || '-'}
+                                  </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
                                   {formatDate(bill.date)}
