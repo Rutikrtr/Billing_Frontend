@@ -491,11 +491,20 @@ const BillingReportDownload = ({ customers, activeTab = 'all' }) => {
                 <div class="ci-label">ग्राहकाचे नाव</div>
                 <div class="ci-value">${customerName}</div>
               </div>
+
               <div class="ci-cell">
                 <div class="ci-label">पत्ता</div>
-                <div class="ci-value">${customer.customerAddress || customer.address || '—'}</div>
+                <div class="ci-value">
+                  ${customer.customerAddress || customer.address || '—'}
+                </div>
               </div>
-              <div class="ci-cell"></div>
+
+              <div class="ci-cell">
+                <div class="ci-label">GSTIN</div>
+                <div class="ci-value">
+                  ${customer.gstNo}
+                </div>
+              </div>
             </div>
 
             <div class="ci-row">

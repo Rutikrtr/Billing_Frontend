@@ -115,6 +115,9 @@ const ClientTableRow = ({ client, handleEditClient, handleDeleteClient, onNoteUp
             {client.customerMobile || 'N/A'}
           </div>
         </td>
+        <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+  {client.gstNo || 'N/A'}
+</td>
         <td className="py-3 px-4">
           <div className="flex gap-2">
             <button 

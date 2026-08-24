@@ -439,7 +439,6 @@ const BillList = ({
               <tbody>
                 {filteredBills.map((bill, index) => {
                   const transactionCount = bill.transactions ? bill.transactions.length : 0;
-                  console.log('Bill:', bill);
                   const totalPaid = (bill.netAmount || 0) - (bill.pendingAmount || 0);
                   const quantity = getBillQuantity(bill);
                   const rate = getBillRate(bill);

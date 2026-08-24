@@ -7,6 +7,8 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
   const [selectedBills, setSelectedBills] = useState(new Set());
   const [selectedCustomerId, setSelectedCustomerId] = useState(null);
   const [gstEnabled, setGstEnabled] = useState(false);
+  const [showChallanModal, setShowChallanModal] = useState(false);
+  const [challanNumber, setChallanNumber] = useState('');
   const { user } = useSelector((state) => state.auth);
 
   const toggleCustomer = (customerId) => {
@@ -141,6 +143,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
     return bill.quantity || 0;
   };
 
+
   const getBillRate = (bill) => {
     if (bill.vehicles && bill.vehicles.length > 0) {
       const totalAmount = bill.vehicles.reduce((sum, vehicle) => sum + ((vehicle.quantity || 0) * (vehicle.rate || 0)), 0);
@@ -156,7 +159,25 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
     return bills.filter(bill => selectedBills.has(`${customerId}-${bill.billNo}`));
   };
 
-  const generateSelectedBillsPDF = () => {
+  // ─── NEW: open the challan-number popup instead of printing straight away ──
+  const handlePrintButtonClick = () => {
+    if (selectedBills.size === 0) { alert('Please select at least one bill to print'); return; }
+    setChallanNumber('');
+    setShowChallanModal(true);
+  };
+
+  const handleChallanSkip = () => {
+    setShowChallanModal(false);
+    generateSelectedBillsPDF('');
+  };
+
+  const handleChallanConfirm = () => {
+    setShowChallanModal(false);
+    generateSelectedBillsPDF(challanNumber.trim());
+  };
+  // ────────────────────────────────────────────────────────────────────────────
+
+  const generateSelectedBillsPDF = (challanNo = '') => {
     if (selectedBills.size === 0) { alert('Please select at least one bill to print'); return; }
     const customerBills = customers.map(customer => ({
       customer,
@@ -164,7 +185,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
     })).filter(item => item.bills.length > 0);
     if (customerBills.length === 0) { alert('No bills selected'); return; }
     customerBills.forEach(({ customer, bills }) => {
-      const htmlContent = generateCustomerPDFContent(customer, bills);
+      const htmlContent = generateCustomerPDFContent(customer, bills, challanNo);
       const blob = new Blob([htmlContent], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const customerName = (customer.customerName || customer.name || 'Unknown_Customer').replace(/[^a-zA-Z0-9]/g, '_');
@@ -184,7 +205,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
   };
 
   // ─── UPDATED: compact PDF layout ───────────────────────────────────────────
-  const generateCustomerPDFContent = (customer, selectedBillsList) => {
+  const generateCustomerPDFContent = (customer, selectedBillsList, challanNo = '') => {
     const customerName = customer.customerName || customer.name || 'Unknown Customer';
     const reportDate = formatDate(new Date());
 
@@ -461,12 +482,15 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
                 <div class="ci-label">पत्ता</div>
                 <div class="ci-value">${customer.customerAddress || customer.address || '—'}</div>
               </div>
-              <div class="ci-cell"></div>
+              <div class="ci-cell">
+                   <div class="ci-label">GST-IN</div>
+                <div class="ci-value">${customer.gstNo}</div>
+              </div>
             </div>
             <div class="ci-row">
               <div class="ci-cell">
-                <div class="ci-label">कस्टमर नं.</div>
-                <div class="ci-value">${customer.customerMobile || '—'}</div>
+                <div class="ci-label">चलन नं.</div>
+                <div class="ci-value">${challanNo || '—'}</div>
               </div>
               <div class="ci-cell">
                 <div class="ci-label">बिल नं.</div>
@@ -673,7 +697,7 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
                   Clear Selection
                 </button>
                 <button
-                  onClick={generateSelectedBillsPDF}
+                  onClick={handlePrintButtonClick}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -703,6 +727,59 @@ const CustomerBillTable = ({ customers, dateRange, activeTab = 'all' }) => {
           </div>
         )}
       </div>
+
+      {/* ─── NEW: Challan number popup ───────────────────────────────────────── */}
+      {showChallanModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setShowChallanModal(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-sm p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              Add Challan Number
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              This will print on the bill in place of the customer number.
+            </p>
+
+            <label
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              style={{ fontFamily: "'Noto Sans Devanagari', 'Arial Unicode MS', Arial, sans-serif" }}
+            >
+              चलन क्रमांक (Challan Number)
+            </label>
+            <input
+              type="text"
+              autoFocus
+              value={challanNumber}
+              onChange={(e) => setChallanNumber(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleChallanConfirm(); }}
+              placeholder="Enter challan number"
+              style={{ fontFamily: "'Noto Sans Devanagari', 'Arial Unicode MS', Arial, sans-serif" }}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={handleChallanSkip}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleChallanConfirm}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ──────────────────────────────────────────────────────────────────────── */}
 
       <div className="divide-y divide-gray-200 dark:divide-gray-700">
         {customers.map((customer) => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Printer, X, FileText } from 'lucide-react';
 
@@ -11,6 +11,9 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
       ? `${window.location.origin}/logo1.png`
       : `${window.location.origin}/logo2.png`;
   };
+
+  const [showChallanModal, setShowChallanModal] = useState(false);
+  const [challanNumber, setChallanNumber] = useState("");
 
   // Format date for display (DD/MM/YYYY format)
   const formatDate = (date) => {
@@ -55,12 +58,22 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
     return 'RS. ' + words.trim() + ' ONLY';
   };
 
+  const handleChallanSkip = () => {
+    setShowChallanModal(false);
+    printBill("");
+  };
+
+  const handleChallanConfirm = () => {
+    setShowChallanModal(false);
+    printBill(challanNumber.trim());
+    setChallanNumber("");
+  };
+
   const totalQuantity = bill.vehicles ? bill.vehicles.reduce((sum, v) => sum + v.quantity, 0) : bill.quantity || 0;
 
-  const printBill = () => {
+  const printBill = (challanNo = "") => {
     const printContent = `
     <!DOCTYPE html>
-    <html>
     <head>
       <meta charset="UTF-8">
       <title>Invoice - ${bill.billNo}</title>
@@ -451,14 +464,14 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
             </div>
           </div>
 
-          <div class="ci-row">
+                    <div class="ci-row">
             <div class="ci-cell">
-              <div class="ci-label">फोन / Phone</div>
-              <div class="ci-value">${customer?.customerMobile || 'N/A'}</div>
+              <div class="ci-label">चलन क्रमांक / Challan No.</div>
+              <div class="ci-value">${challanNo || '—'}</div>
             </div>
             <div class="ci-cell">
               <div class="ci-label">GST No.</div>
-              <div class="ci-value">${customer?.customerGST || '—'}</div>
+              <div class="ci-value">${customer?.gstNo || '—'}</div>
             </div>
           </div>
         </div>
@@ -861,7 +874,7 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
         {/* Action Buttons */}
         <div className="bg-white border-t border-gray-200 px-6 py-4 flex gap-4 flex-shrink-0">
           <button
-            onClick={printBill}
+            onClick={() => setShowChallanModal(true)}
             className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-3 px-6 rounded-lg hover:from-red-700 hover:to-red-800 transition-all duration-200 font-semibold flex items-center justify-center gap-2 shadow-lg"
           >
             <Printer className="w-5 h-5" />
@@ -875,6 +888,49 @@ const InvoicePrint = ({ bill, customer, onClose }) => {
           </button>
         </div>
       </div>
+            {showChallanModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Enter Challan Number
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                Do you want to add a challan number to this invoice?
+              </p>
+            </div>
+
+            <div className="p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Challan Number
+              </label>
+              <input
+                type="text"
+                value={challanNumber}
+                onChange={(e) => setChallanNumber(e.target.value)}
+                placeholder="e.g. CH-1234"
+                autoFocus
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+              <button
+                onClick={handleChallanSkip}
+                className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors text-gray-700"
+              >
+                Skip (Don't add challan)
+              </button>
+              <button
+                onClick={handleChallanConfirm}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
